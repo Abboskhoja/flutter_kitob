@@ -1,0 +1,9 @@
+build/
+.dart_tool/
+.flutter-sdk/
+**/.dart_tool/
+**/build/
+ios/Pods/
+macos/Pods/
+.idea/
+*.iml
