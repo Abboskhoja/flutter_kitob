@@ -1,0 +1,15 @@
+then: 15
+catchError: Invalid argument(s): nolga bo'lib bo'lmaydi
+whenComplete
+vaqt tugadi
+TimeoutException: Future not completed
+xato: Bad state: yomon holat
+any: tez
+isCompleted: false
+kutildi: 42
+isCompleted: true
+o'tgan vaqt: 2 s
+Instance of 'Future<int>'
+[]
+7
+3

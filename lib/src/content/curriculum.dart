@@ -1,0 +1,599 @@
+import 'package:flutter/material.dart';
+
+import '../core/design_system/tokens.dart';
+import 'levels/level0.dart';
+import 'levels/level1.dart';
+import 'levels/level2.dart';
+import 'levels/level3.dart';
+import 'levels/level4.dart';
+import 'levels/level5.dart';
+import 'levels/level_env.dart';
+import 'model.dart';
+
+/// Kontent oxirgi marta tekshirilgan SDK versiyalari.
+const contentSdk = 'Dart 3.13 · Flutter 3.47';
+const contentReviewed = '2026-10';
+
+/// 16 bosqichli o'quv dasturi: ZERO → BEGINNER → DART → FLUTTER → JUNIOR → MIDDLE → SENIOR →
+/// STAFF → PRINCIPAL → FELLOW → INTERNALS → RESEARCH.
+///
+/// Yuqori bosqich nomlari bilim yo'nalishini bildiradi — haqiqiy lavozim yoki ish tajribasini tasdiqlamaydi.
+/// Mavzular rejasi to'liq ko'rsatiladi; tayyor bo'lmagan dars hech qachon "tayyor" deb ko'rsatilmaydi.
+final curriculum = <Level>[
+  Level(
+    number: 1,
+    rank: 'ZERO',
+    title: 'Noldan dasturlash',
+    subtitle: 'Kompyuter, dastur va algoritm — hech qanday bilim talab qilinmaydi',
+    track: Track.foundations,
+    icon: Icons.lightbulb_outline_rounded,
+    color: KColors.teal,
+    outcome: 'Dastur, til, algoritm, fayl, OS, frontend/backend, terminal va SDK tushunchalarini o\'z so\'zlaringiz bilan tushuntira olasiz.',
+    competencies: [
+      'Hardware va software farqini misol bilan tushuntiradi',
+      'Masalani qadam-baqadam algoritmga ajratadi',
+      'Source code, compiler va interpreter vazifasini ayta oladi',
+      'Fayl, papka va operatsion tizim tushunchalarini qo\'llaydi',
+      'Frontend, backend, mobil va web ilovalarni farqlaydi',
+      'IDE, terminal, SDK va Git nima uchun kerakligini biladi',
+    ],
+    modules: [
+      Module(
+        id: 'zero.basics',
+        title: 'Raqamli dunyo asoslari',
+        summary: 'Kompyuterdan algoritmgacha',
+        lessons: level0Lessons,
+        topics: [
+          'Kompyuter nima?', 'Hardware va software', 'Dastur qanday ishlaydi?', 'Dasturlash tili', 'Source code',
+          'Syntax', 'Compiler va interpreter', 'Algoritm', 'Buyruq', 'Ma\'lumot', 'Xotira', 'Fayl va papka',
+          'Operatsion tizim', 'Internet va server', 'Frontend va backend', 'Mobil va web ilova', 'Bug va debugging',
+          'IDE', 'SDK', 'API', 'Git', 'Terminal', 'Dastur yaratish jarayoni',
+        ],
+      ),
+    ],
+    capstone: Capstone(
+      'O\'z algoritmingiz',
+      'Kundalik vazifa (masalan, choy damlash yoki do\'kondan xarid) uchun algoritm tuzing va uni o\'z so\'zlaringiz bilan tushuntiring.',
+      requirements: ['Kamida 6 qadam', 'Kamida bitta shart (agar ... bo\'lsa)', 'Kamida bitta takrorlanuvchi qadam'],
+    ),
+  ),
+  Level(
+    number: 2,
+    rank: 'BEGINNER',
+    title: 'Dasturchi muhiti',
+    subtitle: 'Terminal, fayl tizimi, Git, SDK va loyiha tuzilmasi',
+    track: Track.foundations,
+    icon: Icons.terminal_rounded,
+    color: Color(0xFF0B7285),
+    outcome: 'Terminalda papka va fayllar bilan ishlaysiz, Dart/Flutter loyihasini yaratasiz va Git bilan saqlaysiz.',
+    competencies: [
+      'Terminalda pwd, ls, cd, mkdir, touch, cat buyruqlarini to\'g\'ri ishlatadi',
+      'Absolyut va nisbiy yo\'llarni farqlaydi',
+      'dart create / dart run bilan loyiha yaratib ishga tushiradi',
+      'pubspec.yaml va dependency tushunchasini biladi',
+      'git init, add, commit, status bilan versiyalarni saqlaydi',
+      'Windows, macOS va Linux terminallari farqini biladi',
+    ],
+    modules: [
+      Module(
+        id: 'env.terminal',
+        title: 'Terminal va loyiha',
+        summary: 'Virtual terminalda xavfsiz mashq',
+        lessons: envLessons,
+        topics: [
+          'Terminal ochish', 'CLI va shell', 'File system', 'Working directory', 'pwd, ls, cd', 'mkdir, touch, cat',
+          'Absolyut va nisbiy yo\'l', 'Windows, macOS, Linux farqlari', 'dart create', 'dart run', 'pubspec.yaml',
+          'Package manager va dependencies', 'flutter doctor', 'flutter create', 'Git', 'git init/add/commit',
+          'Branch va merge', '.gitignore', 'README', 'GitHub, clone, push, pull',
+        ],
+      ),
+      Module(
+        id: 'env.setup',
+        title: 'Haqiqiy kompyuterni sozlash',
+        summary: 'SDK, IDE, emulyator',
+        topics: [
+          'Flutter SDK o\'rnatish', 'Dart SDK', 'Environment variables va PATH', 'VS Code', 'Android Studio',
+          'Emulator va simulator', 'Physical device debugging',
+        ],
+      ),
+    ],
+    capstone: Capstone(
+      'Birinchi loyiha muhiti',
+      'Virtual terminalda Dart loyihasini yarating, uni ishga tushiring va Git bilan saqlang. So\'ng shu jarayonni o\'z kompyuteringizda takrorlang.',
+      requirements: ['dart create bilan loyiha', 'dart run natijasi', 'git commit tarixi'],
+    ),
+  ),
+  Level(
+    number: 3,
+    rank: 'DART FOUNDATION',
+    title: 'Dart asoslari',
+    subtitle: 'Sintaksis, turlar, shartlar, sikllar, kolleksiyalar va funksiyalar',
+    track: Track.dart,
+    icon: Icons.code_rounded,
+    color: KColors.primary,
+    outcome: 'O\'zgaruvchilar, turlar, shartlar, sikllar, List/Map/Set va funksiyalar bilan algoritmik masalalarni yechasiz.',
+    competencies: [
+      'var, final, const va asosiy turlarni to\'g\'ri tanlaydi',
+      'String interpolation va tur o\'zgartirishni qo\'llaydi',
+      'if/else, switch va pattern bilan qaror qabul qiladigan kod yozadi',
+      'for, while va kolleksiyalar bilan ma\'lumotlarni qayta ishlaydi',
+      'Null safety qoidalariga rioya qiladi',
+      'Parametrli, qiymat qaytaradigan funksiyalar va closure yozadi',
+    ],
+    modules: [
+      Module(
+        id: 'dart.basics',
+        title: 'Dart bilan tanishuv',
+        summary: 'Birinchi dasturdan turlargacha',
+        lessons: level1Lessons,
+        topics: [
+          'Dart tarixi', 'Dart SDK', 'main()', 'void', 'print', 'Comments', 'Variables', 'var, final, const',
+          'int, double, num', 'String', 'bool', 'Object va dynamic', 'Type inference', 'Operators', 'Expressions',
+          'Type conversions', 'String interpolation',
+        ],
+      ),
+      Module(
+        id: 'dart.control',
+        title: 'Boshqaruv oqimi va kolleksiyalar',
+        summary: 'Shartlar, sikllar, List, Map, Set, null safety',
+        lessons: level2Lessons,
+        topics: [
+          'if/else', 'switch', 'for', 'while va do-while', 'break, continue', 'List', 'Map', 'Set', 'Iterable',
+          'Collection-if/for', 'Spread', 'Null safety', 'Null-aware operatorlar', 'Algoritmik mashqlar',
+        ],
+      ),
+      Module(
+        id: 'dart.functions',
+        title: 'Funksiyalar',
+        summary: 'Parametrlar, qaytarish, scope va closure',
+        lessons: level3Lessons.sublist(0, 3),
+        topics: ['Functions', 'Arguments', 'Named va optional parametrlar', 'Return values', 'Arrow functions', 'Scope', 'Closures'],
+      ),
+    ],
+    capstone: Capstone(
+      'Terminal kalkulyatori va masalalar to\'plami',
+      'Kiritilgan ifodani hisoblaydigan kalkulyator va bir nechta algoritmik masalani yeching. Har bir funksiya testlar bilan tekshiriladi.',
+      requirements: ['To\'rt amal va nolga bo\'lish nazorati', 'Funksiyalarga ajratilgan kod', 'Yashirin testlardan o\'tish'],
+      projectId: 'calculator',
+    ),
+  ),
+  Level(
+    number: 4,
+    rank: 'DART ADVANCED',
+    title: 'Advanced Dart',
+    subtitle: 'OOP, xatolar, generics, asinxron dasturlash va Stream',
+    track: Track.dart,
+    icon: Icons.bolt_rounded,
+    color: KColors.orange,
+    outcome: 'Class, meros, interface, mixin bilan modelni loyihalaysiz; Future, async/await va Stream bilan asinxron kod yozasiz.',
+    competencies: [
+      'Class, konstruktor, getter/setter bilan model yaratadi',
+      'Meros, abstrakt class, interface va mixin\'ni to\'g\'ri tanlaydi',
+      'Xatolarni try/catch/finally va o\'z exception class\'lari bilan boshqaradi',
+      'Future, async/await bilan asinxron natijani kutadi va xatosini ushlaydi',
+      'Event loop: microtask va event navbatini tushuntiradi',
+      'Stream, async* va StreamController bilan hodisalar oqimini qayta ishlaydi',
+    ],
+    modules: [
+      Module(
+        id: 'dart.oop',
+        title: 'Obyektga yo\'naltirilgan dasturlash',
+        summary: 'Class, meros, abstraksiya, enum, mixin, xatolar',
+        lessons: level3Lessons.sublist(3),
+        topics: [
+          'Classes', 'Constructors', 'Factory constructors', 'Getters/setters', 'Inheritance', 'Polymorphism',
+          'Abstract classes', 'Interfaces', 'Mixins', 'Extensions', 'Enums', 'Error handling',
+        ],
+      ),
+      Module(
+        id: 'dart.async',
+        title: 'Asinxron Dart',
+        summary: 'Future, async/await, event loop, Stream',
+        lessons: level4AsyncLessons,
+        topics: [
+          'Future', 'Async/await', 'Asinxron xatolar', 'Event loop', 'Microtask va timer', 'Completer', 'Timer',
+          'Streams', 'async* va yield', 'StreamController', 'sync* generatorlar',
+        ],
+      ),
+      Module(
+        id: 'dart.pro',
+        title: 'Professional Dart',
+        summary: 'Generics, records, patterns, testlar, paketlar',
+        topics: [
+          'Generics', 'Records', 'Patterns va pattern matching', 'Class modifiers', 'Extension types',
+          'Null safety deep dive', 'Isolates', 'File I/O', 'JSON serialization', 'HTTP requests', 'Testing',
+          'Analyzer va lint', 'Formatting', 'Dart packages', 'Dart VM introduction',
+        ],
+      ),
+    ],
+    capstone: Capstone(
+      'Ma\'lumotlar bilan ishlaydigan CLI dastur',
+      'Vazifalarni saqlaydigan, qidiradigan, yangilaydigan va test qilinadigan Dart dasturi. Ma\'lumot "serverdan" asinxron yuklanadi.',
+      requirements: ['Model class\'lari', 'Asinxron yuklash va xatoni ushlash', 'Qidiruv va yangilash funksiyalari', 'Testlar'],
+      projectId: 'todo',
+    ),
+  ),
+  Level(
+    number: 5,
+    rank: 'FLUTTER FOUNDATION',
+    title: 'Flutter asoslari',
+    subtitle: 'Widgetlar, layout, holat va ro\'yxatlar',
+    track: Track.flutter,
+    icon: Icons.widgets_outlined,
+    color: KColors.cyan,
+    outcome: 'Widget tree, Stateless/Stateful, layout widgetlari va kiritish elementlari bilan haqiqiy ekranlar yasaysiz.',
+    competencies: [
+      'Widget tree va BuildContext tushunchasini tushuntiradi',
+      'Stateless va Stateful widgetni o\'rinli tanlaydi',
+      'Row, Column, Stack, Expanded bilan moslashuvchan layout quradi',
+      'setState orqali holatni to\'g\'ri yangilaydi',
+      'ListView, TextField va Switch bilan interaktiv ekran yasaydi',
+    ],
+    modules: [
+      Module(
+        id: 'flutter.basics',
+        title: 'Widgetlar dunyosi',
+        summary: 'Birinchi ilovadan interaktiv ekranlargacha',
+        lessons: level5Lessons,
+        topics: [
+          'Flutter nima?', 'Flutter va Dart', 'Widget', 'Widget tree', 'StatelessWidget', 'StatefulWidget',
+          'State lifecycle', 'BuildContext', 'MaterialApp', 'Scaffold', 'Text', 'Icon', 'Image', 'Container',
+          'SizedBox', 'Center', 'Padding', 'Row', 'Column', 'Stack', 'Expanded', 'Flexible', 'ListView', 'GridView',
+          'Layout constraints', 'Theme', 'Buttons', 'Input controls', 'Simple navigation', 'Hot reload va hot restart',
+        ],
+      ),
+    ],
+    capstone: Capstone(
+      'Bir nechta ekranli Flutter ilova',
+      'Ro\'yxat, batafsil ekran va sozlamalar sahifasidan iborat chiroyli, moslashuvchan ilova.',
+      requirements: ['Kamida 3 ta ekran', 'Navigator bilan o\'tish', 'Holatni setState bilan boshqarish', 'Kichik ekranda overflow yo\'q'],
+    ),
+  ),
+  Level(
+    number: 6,
+    rank: 'FLUTTER DEVELOPER',
+    title: 'Flutter Developer',
+    subtitle: 'Android, iOS va web uchun haqiqiy ilovalar',
+    track: Track.flutter,
+    icon: Icons.design_services_outlined,
+    color: Color(0xFF0EA5E9),
+    outcome: 'Moslashuvchan UI, navigatsiya, formalar, API va lokal saqlash bilan bir kod bazasida 3 platformaga ilova yasaysiz.',
+    competencies: [
+      'Responsive va adaptive layout quradi (LayoutBuilder, MediaQuery)',
+      'GoRouter bilan navigatsiya va deep link\'ni sozlaydi',
+      'Form validation va focus boshqaruvini qo\'llaydi',
+      'HTTP/API va lokal saqlash bilan ishlaydi, loading/error holatlarini ko\'rsatadi',
+      'Implicit va explicit animatsiyalar yozadi',
+      'Platformalar farqini (Android/iOS/web) hisobga oladi',
+    ],
+    modules: [
+      Module(id: 'fd.ui', title: 'Moslashuvchan UI', topics: [
+        'Responsive/adaptive UI', 'Material 3', 'Cupertino', 'Design systems', 'ThemeData va dark mode', 'Slivers',
+        'CustomScrollView', 'Accessibility',
+      ]),
+      Module(id: 'fd.nav', title: 'Navigatsiya va formalar', topics: [
+        'Navigation', 'GoRouter', 'Form validation', 'Focus management', 'Keyboard interactions',
+      ]),
+      Module(id: 'fd.data', title: 'Ma\'lumot va platforma', topics: [
+        'State management asoslari', 'HTTP/API', 'Local storage', 'Async UI (FutureBuilder, StreamBuilder)',
+        'Image handling', 'Assets', 'Localization', 'App lifecycle', 'Android/iOS/web platform differences',
+      ]),
+      Module(id: 'fd.motion', title: 'Harakat va chizish', topics: [
+        'Animations', 'GestureDetector', 'CustomPainter', 'Basic testing',
+      ]),
+    ],
+    capstone: Capstone(
+      'Task-management ilovasi',
+      'Bir kod bazasida Android, iOS va webda ishlaydigan to\'liq vazifalar ilovasi.',
+      requirements: ['Responsive layout', 'Lokal saqlash', 'Form validation', 'Widget testlar'],
+    ),
+  ),
+  Level(
+    number: 7,
+    rank: 'JUNIOR ENGINEER',
+    title: 'Junior Engineer',
+    subtitle: 'Mustaqil dastur yaratish va jamoaga hissa qo\'shish',
+    track: Track.pro,
+    icon: Icons.rocket_launch_outlined,
+    color: KColors.success,
+    outcome: 'Authentication, REST, lokal baza va testlardan foydalanadigan ilovani mustaqil yaratasiz va pull request orqali topshirasiz.',
+    competencies: [
+      'Git workflow va pull request orqali ishlaydi',
+      'Papkalar tuzilmasi va qayta ishlatiladigan komponentlar yaratadi',
+      'REST API, authentication va xavfsiz token saqlashni qo\'llaydi',
+      'SQLite bilan lokal ma\'lumotlar bazasini ishlatadi',
+      'Unit va widget testlar yozadi, debugging va logging qiladi',
+    ],
+    modules: [
+      Module(id: 'jr.team', title: 'Jamoaviy ish', topics: ['Git workflows', 'Code review basics', 'GitHub pull requests', 'Documentation', 'Refactoring']),
+      Module(id: 'jr.app', title: 'Ilova tuzilmasi', topics: ['Folder structure', 'Reusable components', 'Navigation patterns', 'Error handling', 'Logging']),
+      Module(id: 'jr.data', title: 'Ma\'lumotlar', topics: ['REST integration', 'Authentication', 'Basic SQLite', 'Async state']),
+      Module(id: 'jr.quality', title: 'Sifat va chiqarish', topics: ['Testing basics', 'Debugging', 'Basic app publishing']),
+    ],
+    capstone: Capstone(
+      'Auth + API + lokal baza ilovasi',
+      'Kirish/ro\'yxatdan o\'tish, API\'dan ma\'lumot, offline kesh va testlar bilan to\'liq ilova.',
+      requirements: ['Authentication oqimi', 'REST va xatolarni qayta ishlash', 'SQLite kesh', 'Testlar va README'],
+    ),
+  ),
+  Level(
+    number: 8,
+    rank: 'MIDDLE ENGINEER',
+    title: 'Middle Engineer',
+    subtitle: 'Arxitektura, state management, offline va CI/CD',
+    track: Track.pro,
+    icon: Icons.architecture_outlined,
+    color: Color(0xFF6366F1),
+    outcome: 'Feature-first arxitektura, Riverpod/BLoC, offline-first sync va CI/CD bilan ko\'p funksiyali tizim quradi.',
+    competencies: [
+      'Feature-first, MVVM va Clean Architecture qatlamlarini ajratadi',
+      'Riverpod va BLoC/Cubit bilan holatni boshqaradi',
+      'Repository pattern va dependency injection qo\'llaydi',
+      'Caching, pagination va offline-first sync\'ni loyihalaydi',
+      'CI/CD va performance optimizatsiyasini sozlaydi',
+    ],
+    modules: [
+      Module(id: 'mid.arch', title: 'Arxitektura', topics: ['Feature-first architecture', 'MVVM', 'Repository pattern', 'Clean Architecture', 'Dependency injection']),
+      Module(id: 'mid.state', title: 'Holatni boshqarish', topics: ['Riverpod', 'BLoC/Cubit', 'ChangeNotifier va ValueNotifier', 'Error/loading/success holatlari']),
+      Module(id: 'mid.data', title: 'Ma\'lumot qatlami', topics: ['Database modeling', 'Caching', 'Pagination', 'Offline-first', 'WebSocket', 'Error resilience']),
+      Module(id: 'mid.delivery', title: 'Sifat va yetkazib berish', topics: ['Web/API security', 'Custom animations', 'Advanced testing', 'CI/CD', 'Performance optimization', 'Release pipelines']),
+    ],
+    capstone: Capstone(
+      'Real-time va offline sync ilovasi',
+      'WebSocket orqali real vaqtli yangilanish va offline rejimda ishlab, keyin sinxronlanadigan ilova.',
+      requirements: ['Qatlamli arxitektura', 'Conflict-aware sync', 'CI pipeline', 'Integration testlar'],
+    ),
+  ),
+  Level(
+    number: 9,
+    rank: 'SENIOR ENGINEER',
+    title: 'Senior Engineer',
+    subtitle: 'Murakkab muammolar, sifat va ishonchlilik',
+    track: Track.pro,
+    icon: Icons.workspace_premium_outlined,
+    color: Color(0xFF7C3AED),
+    outcome: 'Arxitektura qarorlarini hujjatlaydi, performance va xotirani profillaydi, xavfsizlik va release jarayonini boshqaradi.',
+    competencies: [
+      'Architecture decision record (ADR) yozadi',
+      'DevTools bilan performance va memory profiling qiladi',
+      'Platform channels va FFI asoslarini qo\'llaydi',
+      'Crash investigation va incident response o\'tkazadi',
+      'Texnik qarzni baholab, migratsiyani rejalashtiradi',
+    ],
+    modules: [
+      Module(id: 'sr.design', title: 'Loyihalash', topics: ['Architecture decision records', 'Domain-driven thinking', 'Scalability', 'Long-term maintainability']),
+      Module(id: 'sr.perf', title: 'Tezlik va xotira', topics: ['Performance profiling', 'Memory management', 'Concurrency']),
+      Module(id: 'sr.native', title: 'Native integratsiya', topics: ['Native interoperability', 'Platform channels', 'FFI fundamentals']),
+      Module(id: 'sr.ops', title: 'Ishonchlilik', topics: ['Advanced testing strategy', 'Security architecture', 'Crash investigation', 'System observability', 'Dependency management', 'Technical debt', 'Code migration', 'Release engineering', 'Incident response']),
+    ],
+    capstone: Capstone(
+      'Production-style katta ilova',
+      'Arxitektura hujjati, avtomatik testlar, o\'lchangan performance tahlili, security review va deployment bilan.',
+      requirements: ['ADR hujjatlari', 'Profiling natijalari (o\'lchangan)', 'Security checklist', 'Release jarayoni'],
+    ),
+  ),
+  Level(
+    number: 10,
+    rank: 'STAFF ENGINEER',
+    title: 'Staff Engineer',
+    subtitle: 'Bir nechta jamoa uchun umumiy tizimlar',
+    track: Track.leadership,
+    icon: Icons.hub_outlined,
+    color: KColors.warning,
+    outcome: 'Bir nechta ilova ishlatadigan paketlar, design system va API kontraktlarini loyihalaydi.',
+    competencies: [
+      'Shared component library va design system yaratadi',
+      'Monorepo va multi-module arxitekturani boshqaradi',
+      'Architecture RFC yozadi va texnologiyani baholaydi',
+      'Code review orqali mentorlik qiladi',
+    ],
+    modules: [
+      Module(id: 'staff.shared', title: 'Umumiy kod', topics: ['Shared component libraries', 'Design systems at scale', 'Monorepo engineering', 'Multi-module architecture', 'Package governance']),
+      Module(id: 'staff.decisions', title: 'Texnik qarorlar', topics: ['API contracts', 'Architecture RFC', 'Technology evaluation', 'Migration planning', 'Architectural trade-offs', 'Cross-team technical decisions']),
+      Module(id: 'staff.people', title: 'Jamoa va ishonchlilik', topics: ['Code ownership', 'Reliability engineering', 'Mentoring through code review']),
+    ],
+    capstone: Capstone(
+      'Umumiy paketlar va design system',
+      'Bir nechta Flutter ilovasi foydalanadigan design system va umumiy paketlar to\'plami.',
+      requirements: ['Versiyalangan paketlar', 'Hujjat va misollar', 'Golden testlar'],
+    ),
+  ),
+  Level(
+    number: 11,
+    rank: 'SENIOR STAFF',
+    title: 'Senior Staff Engineer',
+    subtitle: 'Bog\'langan murakkab tizimlar',
+    track: Track.leadership,
+    icon: Icons.device_hub_rounded,
+    color: Color(0xFFEA580C),
+    outcome: 'Mobil, web, backend va worker\'lardan iborat ekotizim arxitekturasini loyihalaydi va prototiplaydi.',
+    competencies: [
+      'Distributed va event-driven tizimlar asoslarini qo\'llaydi',
+      'Kesh, navbat va observability strategiyasini tanlaydi',
+      'Error budget va reliability strategiyasini belgilaydi',
+      'Postmortem va texnik roadmap yozadi',
+    ],
+    modules: [
+      Module(id: 'sstaff.systems', title: 'Tizimlar', topics: ['Multi-system architecture', 'Distributed systems foundations', 'Event-driven systems', 'Queue architectures', 'High-scale caching']),
+      Module(id: 'sstaff.reliability', title: 'Ishonchlilik', topics: ['Observability', 'Error budgets', 'Reliability strategy', 'Incident postmortems']),
+      Module(id: 'sstaff.platform', title: 'Platforma', topics: ['CI/CD platform design', 'Cross-platform tooling', 'Developer productivity', 'Technical roadmaps', 'System migration strategy']),
+    ],
+    capstone: Capstone(
+      'Ekotizim arxitekturasi',
+      'Ta\'lim yoki commerce ekotizimi uchun mobil, web, backend va worker\'lar arxitekturasi va prototipi.',
+      requirements: ['Arxitektura diagrammasi', 'Ishlaydigan prototip', 'Observability rejasi'],
+    ),
+  ),
+  Level(
+    number: 12,
+    rank: 'PRINCIPAL',
+    title: 'Principal Engineer',
+    subtitle: 'Tashkilot darajasidagi texnik masalalar',
+    track: Track.leadership,
+    icon: Icons.account_tree_outlined,
+    color: KColors.error,
+    outcome: 'Yuklama modelini tuzadi, real prototipda load-test o\'tkazadi va natijani o\'lchovlarga asoslab taqdim etadi.',
+    competencies: [
+      'Advanced system design va capacity planning qiladi',
+      'Xavfsiz arxitektura va texnik standartlarni belgilaydi',
+      'Performance engineering\'ni o\'lchovlarga asoslaydi',
+      'Uzoq muddatli texnik strategiya tuzadi',
+    ],
+    modules: [
+      Module(id: 'principal.scale', title: 'Miqyos', topics: ['Advanced system design', 'Large-scale reliability', 'Scalability research', 'Capacity planning', 'Performance engineering']),
+      Module(id: 'principal.strategy', title: 'Strategiya', topics: ['Secure architecture', 'Cross-platform strategy', 'Technical standards', 'Deep architecture reviews', 'Complex technical trade-offs', 'Toolchain integration', 'Platform modernization', 'Long-term engineering strategy']),
+    ],
+    capstone: Capstone(
+      'Yuz minglab foydalanuvchiga mo\'ljallangan tizim',
+      'Yuklama modeli, prototip va load-test. Barcha raqamlar haqiqiy o\'lchovdan olinadi — xayoliy natija yozilmaydi.',
+      requirements: ['Yuklama modeli', 'Load-test hisobot (o\'lchangan)', 'Kengaytirish rejasi'],
+    ),
+  ),
+  Level(
+    number: 13,
+    rank: 'DISTINGUISHED',
+    title: 'Distinguished Engineer',
+    subtitle: 'Texnik chegaralar va yangi yondashuvlar',
+    track: Track.leadership,
+    icon: Icons.auto_awesome_outlined,
+    color: Color(0xFFDB2777),
+    outcome: 'Rendering yoki tooling bilan bog\'liq yangi yechimni ishlab chiqadi, benchmark qiladi va texnik hisobot yozadi.',
+    competencies: [
+      'Framework arxitekturasi va rendering optimizatsiyasini tahlil qiladi',
+      'Benchmark metodologiyasini to\'g\'ri qo\'llaydi',
+      'Language tooling va compiler tushunchalarini biladi',
+      'Open-source boshqaruvi va tadqiqot natijalarini yetkazadi',
+    ],
+    modules: [
+      Module(id: 'dist.runtime', title: 'Runtime va rendering', topics: ['Framework architecture', 'Rendering optimization', 'Advanced concurrency', 'Runtime behavior', 'Graphics pipelines', 'High-performance UI']),
+      Module(id: 'dist.tooling', title: 'Tooling va tadqiqot', topics: ['Language tooling', 'Compiler concepts', 'Technical experimentation', 'Benchmark methodology', 'Ecosystem-wide engineering', 'Open-source governance', 'Research communication']),
+    ],
+    capstone: Capstone(
+      'Tooling yoki rendering yechimi',
+      'Yangi Flutter tooling yoki rendering yechimi, benchmark va texnik hisobot.',
+      requirements: ['Takrorlanadigan benchmark', 'Baseline bilan taqqoslash', 'Texnik hisobot'],
+    ),
+  ),
+  Level(
+    number: 14,
+    rank: 'FELLOW',
+    title: 'Engineering Fellow',
+    subtitle: 'Tizimli muammolar va texnologiyaning kelajagi',
+    track: Track.leadership,
+    icon: Icons.public_rounded,
+    color: Color(0xFF9333EA),
+    outcome: 'Keng ko\'lamli muammo bo\'yicha research proposal, ishlaydigan prototip va performance dalillarini tayyorlaydi.',
+    competencies: [
+      'Fundamental arxitektura tamoyillarini asoslaydi',
+      'Til va runtime evolyutsiyasini baholaydi',
+      'Texnik standartlar va governance loyihalaydi',
+      'Mentorlik metodologiyasini qo\'llaydi',
+    ],
+    modules: [
+      Module(id: 'fellow.principles', title: 'Tamoyillar', topics: ['Fundamental architecture principles', 'Complex system constraints', 'Language/runtime evolution', 'Long-horizon architectural design']),
+      Module(id: 'fellow.strategy', title: 'Strategiya va ta\'sir', topics: ['Technology strategy', 'Research evaluation', 'Performance and security at scale', 'Engineering governance', 'Technical standards design', 'Cross-platform computing', 'Open-source ecosystem impact', 'Mentorship methodology']),
+    ],
+    capstone: Capstone(
+      'Research proposal va prototip',
+      'Keng ko\'lamli muhandislik muammosi bo\'yicha taklif, prototip, performance dalillari va design review.',
+      requirements: ['Research proposal', 'Ishlaydigan prototip', 'O\'lchangan dalillar', 'Design review'],
+    ),
+  ),
+  Level(
+    number: 15,
+    rank: 'INTERNALS MASTER',
+    title: 'Flutter va Dart ichki tuzilmasi',
+    subtitle: 'Framework, engine va VM — manba kodi orqali',
+    track: Track.research,
+    icon: Icons.memory_rounded,
+    color: Color(0xFF475569),
+    outcome: 'Widget → Element → RenderObject zanjiri, build/layout/paint pipeline, Dart VM, JIT/AOT va GC qanday ishlashini manba kodi orqali tushuntiradi.',
+    competencies: [
+      'Widget, Element va RenderObject vazifalarini ajratadi',
+      'Build, layout, paint va compositing bosqichlarini kuzatadi',
+      'Dart VM, JIT/AOT, JS va WebAssembly kompilyatsiyasini tushuntiradi',
+      'Event loop, isolate va garbage collector ishini tahlil qiladi',
+      'Flutter manba kodini o\'qiydi va test bilan tasdiqlangan o\'zgarish tayyorlaydi',
+    ],
+    modules: [
+      Module(id: 'int.flutter', title: 'Flutter internals', topics: [
+        'Framework layers', 'Widget, Element va RenderObject', 'Build pipeline', 'Layout pipeline', 'Paint pipeline',
+        'Compositing', 'Semantics tree', 'Scheduler va frames', 'Flutter Engine', 'dart:ui', 'Embedder API',
+        'Impeller', 'Text rendering', 'Input handling', 'Platform integration', 'Framework source analysis',
+      ]),
+      Module(id: 'int.dart', title: 'Dart internals', topics: [
+        'Dart VM', 'Dart runtime', 'JIT compilation', 'AOT compilation', 'JavaScript compilation', 'WebAssembly',
+        'Garbage collection', 'Memory allocation', 'Event loop internals', 'Isolate scheduling', 'AST', 'Parsing',
+        'Static analysis', 'Language server', 'Compiler pipeline',
+      ]),
+    ],
+    capstone: Capstone(
+      'Framework yoki tooling bo\'yicha haqiqiy hissa',
+      'Flutter framework yoki Dart tooling\'dagi haqiqiy muammoga test bilan tasdiqlangan yechim.',
+      requirements: ['Muammo tahlili', 'Regression test', 'Code review\'ga tayyor patch'],
+    ),
+  ),
+  Level(
+    number: 16,
+    rank: 'RESEARCH LAB',
+    title: 'Research & Innovation Lab',
+    subtitle: 'Yangi texnik yechimlarni tadqiq qilish',
+    track: Track.research,
+    icon: Icons.biotech_outlined,
+    color: Color(0xFF0F766E),
+    outcome: 'Muammo tanlashdan open-source hissagacha bo\'lgan tadqiqot siklini mustaqil bajaradi.',
+    competencies: [
+      'Research hypothesis yozadi va baseline o\'lchaydi',
+      'Takrorlanadigan eksperiment va benchmark o\'tkazadi',
+      'Natijalarni xatolar tahlili bilan taqqoslaydi',
+      'Texnik hujjat va open-source contribution tayyorlaydi',
+    ],
+    modules: [
+      Module(id: 'lab.directions', title: 'Yo\'nalishlar', topics: [
+        'Flutter rendering experiments', 'Dart compiler experiments', 'Performance research', 'Developer tools',
+        'Framework extensions', 'Custom package development', 'Advanced animation systems', 'Accessibility research',
+        'AI-assisted development tooling', 'Debugging infrastructure', 'Cross-platform tooling',
+      ]),
+      Module(id: 'lab.workflow', title: 'Tadqiqot jarayoni', topics: [
+        'Muammoni tanlash', 'Mavjud yechimlarni o\'rganish', 'Research hypothesis', 'Baseline o\'lchash', 'Prototype',
+        'Eksperiment', 'Natijalarni taqqoslash', 'Xatolar tahlili', 'Technical writing', 'Open-source contributions',
+        'Benchmark-driven optimization',
+      ]),
+    ],
+    capstone: Capstone(
+      'Tadqiqot natijasi',
+      'Tekshiriladigan source code, takrorlanadigan eksperiment, benchmark, texnik hujjat va yakuniy taqdimot.',
+      requirements: ['Reproducible experiment', 'Benchmark', 'Texnik hujjat', 'Taqdimot'],
+    ),
+  ),
+];
+
+/// Barcha tayyor darslar tartib bilan.
+final List<Lesson> allLessons = [for (final l in curriculum) ...l.lessons];
+
+final Map<String, Lesson> lessonById = {for (final l in allLessons) l.id: l};
+
+final Map<String, Level> levelOfLesson = {
+  for (final lv in curriculum)
+    for (final l in lv.lessons) l.id: lv,
+};
+
+final Map<String, Module> moduleOfLesson = {
+  for (final lv in curriculum)
+    for (final m in lv.modules)
+      for (final l in m.lessons) l.id: m,
+};
+
+Lesson? nextLessonAfter(String id) {
+  final i = allLessons.indexWhere((l) => l.id == id);
+  if (i < 0 || i + 1 >= allLessons.length) return null;
+  return allLessons[i + 1];
+}
+
+Lesson? previousLessonOf(String id) {
+  final i = allLessons.indexWhere((l) => l.id == id);
+  if (i <= 0) return null;
+  return allLessons[i - 1];
+}
+
+Level levelByNumber(int n) => curriculum.firstWhere((l) => l.number == n);

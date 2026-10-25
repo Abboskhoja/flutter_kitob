@@ -1,0 +1,11 @@
+name: kitob_dart
+description: FLUTTER_KITOB uchun o'quv Dart interpretatori (lexer, parser, checker, interpreter, tracer).
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.9.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.31.0

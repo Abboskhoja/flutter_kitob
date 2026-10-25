@@ -1,0 +1,7 @@
+include: package:lints/recommended.yaml
+
+analyzer:
+  exclude:
+    # Konformans va xato namunalari ataylab "o'quvchi kodi" uslubida yozilgan.
+    - test/conformance/**
+    - test/negative/**

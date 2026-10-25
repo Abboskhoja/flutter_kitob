@@ -1,0 +1,35 @@
+{
+    "name": "FLUTTER_KITOB",
+    "short_name": "Kitob",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#087CF7",
+    "theme_color": "#087CF7",
+    "description": "Flutter va Dart dasturlashni noldan o'rgatadigan interaktiv platforma",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

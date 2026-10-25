@@ -1,0 +1,22 @@
+A: boshlandi
+B: boshlandi
+C: boshlandi
+B: tugadi
+C: tugadi
+A: tugadi
+zanjir: 3
+m1
+then1
+then2
+m2
+await null tugadi
+gen: boshlandi
+olindi: 1
+gen: 1 dan keyin
+olindi: 2
+gen: 2 dan keyin
+data 1
+mt orasida
+data 2
+bekor qilindi
+async then: 20

@@ -1,0 +1,17 @@
+1 main boshlandi
+a: boshlandi
+2 main tugadi
+3 sinxron kod tugadi
+4 microtask
+5 then: 1
+a: await dan keyin
+a: then
+5b Future.microtask
+6 Future (event queue)
+7 delayed 0
+7b timer 20ms
+periodic 1 tick=1
+8 delayed 50ms
+periodic 2 tick=2
+periodic 3 tick=3
+9 completer: tayyor

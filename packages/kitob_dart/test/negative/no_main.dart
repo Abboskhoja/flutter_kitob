@@ -1,0 +1,1 @@
+void salom() { print('x'); }

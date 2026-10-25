@@ -1,0 +1,36 @@
+void main() {
+  print(10 / 2);
+  print(10 / 4);
+  print(10 ~/ 4);
+  print(10 % 4);
+  print(-7 % 3);
+  print(-7 ~/ 2);
+  print(0.1 + 0.2);
+  print(2 * 3.0);
+  print(5 + 2);
+  print(1e3);
+  print(1.5e-3);
+  print(100 / 3);
+  print((100 / 3).toStringAsFixed(2));
+  print(3.7.round());
+  print(3.2.ceil());
+  print(3.9.floor());
+  print(-3.5.abs());
+  print((-3.5).abs());
+  print(7.toDouble());
+  print(9.99.toInt());
+  print(int.parse('42') + 1);
+  print(double.parse('2.5') * 2);
+  print(5.isEven);
+  print(5.isOdd);
+  print(1 == 1.0);
+  print(2.5.runtimeType);
+  print(10.0);
+  print(1 / 0);
+  print(-1 / 0);
+  print(12345678901);
+  print(0xFF);
+  print(5.clamp(1, 3));
+  print(17.remainder(5));
+  print(255.toRadixString(2));
+}

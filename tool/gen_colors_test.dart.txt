@@ -1,0 +1,31 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  test('gen', () {
+    final swatches = <String, MaterialColor>{
+      'red': Colors.red, 'pink': Colors.pink, 'purple': Colors.purple, 'deepPurple': Colors.deepPurple,
+      'indigo': Colors.indigo, 'blue': Colors.blue, 'lightBlue': Colors.lightBlue, 'cyan': Colors.cyan,
+      'teal': Colors.teal, 'green': Colors.green, 'lightGreen': Colors.lightGreen, 'lime': Colors.lime,
+      'yellow': Colors.yellow, 'amber': Colors.amber, 'orange': Colors.orange, 'deepOrange': Colors.deepOrange,
+      'brown': Colors.brown, 'grey': Colors.grey, 'blueGrey': Colors.blueGrey,
+    };
+    final b = StringBuffer('// GENERATED from Flutter Colors (tool: test/zz_gen_colors_test.dart). Do not edit.\n\n');
+    b.writeln('const materialSwatches = <String, Map<int, int>>{');
+    for (final e in swatches.entries) {
+      b.write("  '${e.key}': {");
+      for (final s in [50, 100, 200, 300, 400, 500, 600, 700, 800, 900]) {
+        b.write('$s: 0x${e.value[s]!.toARGB32().toRadixString(16).toUpperCase()}, ');
+      }
+      b.writeln('},');
+    }
+    b.writeln('};\n');
+    b.writeln('const plainColors = <String, int>{');
+    for (final e in {'black': Colors.black, 'white': Colors.white, 'transparent': Colors.transparent, 'black54': Colors.black54, 'black87': Colors.black87, 'black26': Colors.black26, 'white70': Colors.white70, 'white54': Colors.white54, 'black12': Colors.black12}.entries) {
+      b.writeln("  '${e.key}': 0x${e.value.toARGB32().toRadixString(16).toUpperCase()},");
+    }
+    b.writeln('};');
+    File('packages/kitob_dart/lib/src/flutter_colors.g.dart').writeAsStringSync(b.toString());
+  });
+}
