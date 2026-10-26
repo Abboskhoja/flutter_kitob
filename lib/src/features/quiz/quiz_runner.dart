@@ -3,8 +3,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../shared/bitik.dart';
 import '../../content/model.dart';
 import '../../core/design_system/components.dart';
+import '../../core/sound/sounds.dart';
+import '../../core/design_system/motion.dart';
 import '../../core/design_system/rich_text.dart';
 import '../../core/design_system/theme.dart';
 import '../../core/design_system/tokens.dart';
@@ -55,11 +58,22 @@ class _QuizRunnerState extends State<QuizRunner> {
   QuizSummary? _summary;
   int _attempt = 0;
 
+  static const _praise = ['To\'g\'ri! 🎉', 'Zo\'r, aynan shunday!', 'Barakalla! 👏', 'Ajoyib — davom eting!', 'To\'ppa-to\'g\'ri! ✨'];
+
+  /// Ketma-ket to'g'ri javoblar — o'yin hissi va "yana bittasi" motivatsiyasi.
+  int _combo = 0;
+  int _bestCombo = 0;
+
   void _check() {
     final q = widget.questions[_i];
     final v = gradeQuestion(q, _answers[_i]);
-    HapticFeedback.lightImpact();
-    setState(() => _verdicts[_i] = v);
+    v.correct ? HapticFeedback.lightImpact() : HapticFeedback.heavyImpact();
+    Sounds.play(v.correct ? Sfx.correct : Sfx.wrong);
+    setState(() {
+      _verdicts[_i] = v;
+      _combo = v.correct ? _combo + 1 : 0;
+      if (_combo > _bestCombo) _bestCombo = _combo;
+    });
   }
 
   void _next() {
@@ -78,6 +92,8 @@ class _QuizRunnerState extends State<QuizRunner> {
     _verdicts.clear();
     _summary = null;
     _attempt++;
+    _combo = 0;
+    _bestCombo = 0;
   });
 
   @override
@@ -86,27 +102,47 @@ class _QuizRunnerState extends State<QuizRunner> {
       return const EmptyState(icon: Icons.quiz_outlined, title: 'Savollar yo\'q', message: 'Bu bo\'lim uchun savollar hali qo\'shilmagan.');
     }
     final s = _summary;
-    if (s != null) return _Results(summary: s, passScore: widget.passScore, actions: widget.resultsActions?.call(context, s, _retry), onRetry: _retry);
+    if (s != null) {
+      return _Results(summary: s, passScore: widget.passScore, bestCombo: _bestCombo, actions: widget.resultsActions?.call(context, s, _retry), onRetry: _retry);
+    }
     final q = widget.questions[_i];
     final v = _verdicts[_i];
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      // 1-qator: savol raqami va progress nuqtalari; 2-qator: tur va combo
+      // (tor ekranda ham bir-biriga siqilmaydi).
       Row(children: [
         Text('Savol ${_i + 1} / ${widget.questions.length}'.uz, style: context.text.labelLarge),
-        const SizedBox(width: 10),
-        KBadge(questionTypeLabel(q), color: KColors.violet),
         const Spacer(),
         for (var k = 0; k < widget.questions.length; k++)
-          Container(
-            width: 9,
+          AnimatedContainer(
+            duration: KDurations.medium,
+            curve: Curves.easeOutBack,
+            width: k == _i && _verdicts[k] == null ? 20 : 9,
             height: 9,
             margin: const EdgeInsets.only(left: 4),
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(5),
               color: _verdicts[k] == null
                   ? (k == _i ? KColors.primary : context.k.borderStrong)
                   : (_verdicts[k]!.correct ? KColors.success : KColors.error),
             ),
           ),
+      ]),
+      const SizedBox(height: 8),
+      Wrap(spacing: 8, runSpacing: 6, children: [
+        KBadge(questionTypeLabel(q), color: KColors.violet),
+        AnimatedSwitcher(
+          duration: KDurations.medium,
+          transitionBuilder: (c, a) => ScaleTransition(scale: CurvedAnimation(parent: a, curve: Curves.elasticOut), child: c),
+          child: _combo >= 2
+              ? Pop(
+                  key: const ValueKey('combo'),
+                  trigger: _combo,
+                  amount: 0.25,
+                  child: KBadge('🔥 $_combo ketma-ket', color: KColors.orange, solid: true),
+                )
+              : const SizedBox.shrink(key: ValueKey('no-combo')),
+        ),
       ]),
       const SizedBox(height: 14),
       AnimatedSwitcher(
@@ -124,30 +160,48 @@ class _QuizRunnerState extends State<QuizRunner> {
               CodeFrame(code: q.code, child: CodeView(code: q.code!, showLineNumbers: true)),
             ],
             const SizedBox(height: 14),
-            AbsorbPointer(
-              absorbing: v != null,
-              child: _AnswerInput(
-                question: q,
-                seed: widget.seed * 31 + _i + _attempt * 7,
-                answer: _answers[_i],
-                verdict: v,
-                onChanged: (a) => setState(() => _answers[_i] = a),
+            Shake(
+              trigger: v != null && !v.correct ? '$_attempt-$_i' : null,
+              child: AbsorbPointer(
+                absorbing: v != null,
+                child: _AnswerInput(
+                  question: q,
+                  seed: widget.seed * 31 + _i + _attempt * 7,
+                  answer: _answers[_i],
+                  verdict: v,
+                  onChanged: (a) => setState(() => _answers[_i] = a),
+                ),
               ),
             ),
             const SizedBox(height: 14),
             if (v != null) ...[
-              FeedbackBanner(
-                kind: v.correct ? FeedbackKind.success : FeedbackKind.error,
-                title: v.correct ? 'To\'g\'ri! 🎉' : 'Noto\'g\'ri',
-                message: q.explanation,
-                child: v.correct || v.correctAnswerText == null
-                    ? (v.detail == null ? null : Text(v.detail!.uz, style: context.text.bodySmall))
-                    : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('To\'g\'ri javob:'.uz, style: context.text.labelMedium),
-                        const SizedBox(height: 4),
-                        SelectableText(v.correctAnswerText!, style: codeStyle(size: 13, color: context.k.text)),
-                        if (v.detail != null) ...[const SizedBox(height: 6), Text(v.detail!.uz, style: context.text.bodySmall)],
-                      ]),
+              Reveal(
+                key: ValueKey('fb-$_attempt-$_i'),
+                offset: const Offset(0, 12),
+                scale: v.correct ? 0.9 : 0.97,
+                duration: const Duration(milliseconds: 420),
+                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6, top: 2),
+                    child: Bitik(mood: v.correct ? (_combo >= 3 ? BitikMood.cheer : BitikMood.happy) : BitikMood.encourage, size: 54),
+                  ),
+                  Expanded(
+                    child: FeedbackBanner(
+                      kind: v.correct ? FeedbackKind.success : FeedbackKind.error,
+                      // Maqtov har safar boshqacha; xatoda — tanbeh emas, dalda.
+                      title: v.correct ? _praise[_i % _praise.length] : 'Hechqisi yo\'q — to\'g\'ri javobni ko\'ramiz',
+                      message: q.explanation,
+                      child: v.correct || v.correctAnswerText == null
+                          ? (v.detail == null ? null : Text(v.detail!.uz, style: context.text.bodySmall))
+                          : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Text('To\'g\'ri javob:'.uz, style: context.text.labelMedium),
+                              const SizedBox(height: 4),
+                              SelectableText(v.correctAnswerText!, style: codeStyle(size: 13, color: context.k.text)),
+                              if (v.detail != null) ...[const SizedBox(height: 6), Text(v.detail!.uz, style: context.text.bodySmall)],
+                            ]),
+                    ),
+                  ),
+                ]),
               ),
               const SizedBox(height: 12),
             ],
@@ -455,9 +509,10 @@ class _AnswerInputState extends State<_AnswerInput> {
 }
 
 class _Results extends StatelessWidget {
-  const _Results({required this.summary, required this.passScore, required this.onRetry, this.actions});
+  const _Results({required this.summary, required this.passScore, required this.onRetry, this.actions, this.bestCombo = 0});
   final QuizSummary summary;
   final int passScore;
+  final int bestCombo;
   final VoidCallback onRetry;
   final Widget? actions;
 
@@ -466,56 +521,82 @@ class _Results extends StatelessWidget {
     final passed = summary.score >= passScore;
     final topics = summary.wrongTopics.toSet();
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      KCard(
-        child: Row(children: [
-          KProgressRing(
-            value: summary.score / 100,
-            size: 96,
-            stroke: 9,
-            color: passed ? KColors.success : KColors.warning,
-            center: Text('${summary.score}%', style: context.text.titleLarge!.copyWith(fontWeight: FontWeight.w800)),
-          ),
-          const SizedBox(width: 18),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text((passed ? 'Ajoyib natija!' : 'Yana bir oz mashq kerak').uz, style: context.text.headlineSmall),
-              const SizedBox(height: 6),
-              Text('✓ ${summary.correct} to\'g\'ri   ✗ ${summary.total - summary.correct} xato'.uz, style: context.text.bodyLarge),
-              const SizedBox(height: 4),
-              Text((passed ? 'O\'tish bali: $passScore% — muvaffaqiyatli' : 'O\'tish uchun kamida $passScore% kerak').uz,
-                  style: context.text.bodySmall),
-            ]),
-          ),
-        ]),
+      BitikSays(
+        mood: summary.score == 100 ? BitikMood.cheer : (passed ? BitikMood.happy : BitikMood.encourage),
+        text: summary.score == 100
+            ? 'Hammasi to\'g\'ri! Siz bu mavzuni **to\'liq** o\'zlashtirdingiz.'
+            : passed
+                ? 'Yaxshi natija! Xato bo\'lgan savollarni pastda ko\'rib chiqing — ular eng ko\'p o\'rgatadi.'
+                : 'Xavotir olmang — bu odatiy holat. Tushuntirishni qayta o\'qib, yana urinib ko\'ramiz.',
+      ),
+      const SizedBox(height: 10),
+      Reveal(
+        scale: 0.9,
+        child: KCard(
+          borderColor: (passed ? KColors.success : KColors.warning).withValues(alpha: 0.45),
+          elevated: true,
+          child: Row(children: [
+            PulseGlow(
+              active: summary.score == 100,
+              color: KColors.success,
+              child: KProgressRing(
+                value: summary.score / 100,
+                size: 96,
+                stroke: 9,
+                color: passed ? KColors.success : KColors.warning,
+                center: CountUp(summary.score, suffix: '%', style: context.text.titleLarge!.copyWith(fontWeight: FontWeight.w800)),
+              ),
+            ),
+            const SizedBox(width: 18),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text((passed ? 'Ajoyib natija!' : 'Yana bir oz mashq kerak').uz, style: context.text.headlineSmall),
+                const SizedBox(height: 6),
+                Text('✓ ${summary.correct} to\'g\'ri   ✗ ${summary.total - summary.correct} xato'.uz, style: context.text.bodyLarge),
+                const SizedBox(height: 4),
+                Text((passed ? 'O\'tish bali: $passScore% — muvaffaqiyatli' : 'O\'tish uchun kamida $passScore% kerak').uz,
+                    style: context.text.bodySmall),
+                if (bestCombo >= 3) ...[
+                  const SizedBox(height: 8),
+                  KBadge('Eng uzun seriya: $bestCombo ta to\'g\'ri ketma-ket', color: KColors.orange, icon: Icons.local_fire_department_rounded),
+                ],
+              ]),
+            ),
+          ]),
+        ),
       ),
       const SizedBox(height: 12),
       if (topics.isNotEmpty)
         FeedbackBanner(
           kind: FeedbackKind.warning,
           title: 'Qayta o\'rganish tavsiya etiladi',
-          message: 'Quyidagi mavzularda xato bo\'ldi: ${topics.map((t) => '**$t**').join(', ')}. Tushuntirishni qayta o\'qing yoki AI ustozdan boshqa misol so\'rang.',
+          message: 'Quyidagi mavzularda xato bo\'ldi: ${topics.map((t) => '**$t**').join(', ')}. Tushuntirishni qayta o\'qing va misollarni o\'zingiz o\'zgartirib ko\'ring.',
         ),
       const SizedBox(height: 12),
       ?actions,
       const SizedBox(height: 12),
       SectionHeader('Javoblar tahlili'),
       for (var i = 0; i < summary.total; i++)
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: KCard(
-            padding: const EdgeInsets.all(12),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Icon(summary.verdicts[i].correct ? Icons.check_circle_rounded : Icons.cancel_rounded,
-                  color: summary.verdicts[i].correct ? KColors.success : KColors.error),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  RichUz(summary.questions[i].prompt, style: context.text.titleSmall),
-                  const SizedBox(height: 4),
-                  RichUz(summary.questions[i].explanation, style: context.text.bodySmall),
-                ]),
-              ),
-            ]),
+        Reveal(
+          index: i,
+          delay: const Duration(milliseconds: 250),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: KCard(
+              padding: const EdgeInsets.all(12),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Icon(summary.verdicts[i].correct ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                    color: summary.verdicts[i].correct ? KColors.success : KColors.error),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    RichUz(summary.questions[i].prompt, style: context.text.titleSmall),
+                    const SizedBox(height: 4),
+                    RichUz(summary.questions[i].explanation, style: context.text.bodySmall),
+                  ]),
+                ),
+              ]),
+            ),
           ),
         ),
       const SizedBox(height: 8),

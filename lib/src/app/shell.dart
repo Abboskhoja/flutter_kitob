@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/design_system/components.dart';
+import '../core/design_system/motion.dart';
 import '../core/design_system/rich_text.dart';
+import '../core/design_system/theme.dart';
 import '../core/design_system/tokens.dart';
 import '../core/state/progress.dart';
 import '../core/state/settings.dart';
 import '../shared/logo.dart';
+import 'bottom_nav.dart';
 
 class _Dest {
   const _Dest(this.label, this.icon, this.selectedIcon);
@@ -51,10 +55,10 @@ final _sideSections = <(String, List<_SideItem>)>[
     _SideItem('Kod vizualizatori', Icons.slow_motion_video_rounded, '/practice/visualizer',
         match: (p, q) => p == '/practice/visualizer'),
     _SideItem('Amaliy loyihalar', Icons.rocket_launch_outlined, '/practice/projects', match: (p, q) => p.startsWith('/practice/projects')),
+    _SideItem('Intervyuga tayyorgarlik', Icons.work_outline_rounded, '/practice/interview', match: (p, q) => p == '/practice/interview'),
   ]),
   ('Natijalar', [
     _SideItem('Test va imtihonlar', Icons.quiz_outlined, '/tests', match: (p, q) => p.startsWith('/tests')),
-    _SideItem('AI ustoz', Icons.auto_awesome_outlined, '/home/tutor', match: (p, q) => p == '/home/tutor'),
     _SideItem('Yutuqlar', Icons.emoji_events_outlined, '/profile/achievements', match: (p, q) => p == '/profile/achievements'),
     _SideItem('Profil', Icons.person_outline_rounded, '/profile', match: (p, q) => p == '/profile'),
     _SideItem('Sozlamalar', Icons.settings_outlined, '/profile/settings', match: (p, q) => p == '/profile/settings'),
@@ -71,13 +75,14 @@ class AppShell extends ConsumerWidget {
       path.startsWith('/learn/lesson') ||
       path.startsWith('/practice/') ||
       path.startsWith('/tests/review') ||
-      path.startsWith('/tests/exam') ||
-      path == '/home/tutor';
+      path.startsWith('/tests/exam');
 
   void _goBranch(int i) => shell.goBranch(i, initialLocation: i == shell.currentIndex);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) => _GlobalShortcuts(onBranch: _goBranch, child: _layout(context));
+
+  Widget _layout(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final state = GoRouterState.of(context);
     final path = state.uri.path;
@@ -103,19 +108,11 @@ class AppShell extends ConsumerWidget {
                 labelType: NavigationRailLabelType.all,
                 leading: Padding(
                   padding: const EdgeInsets.only(top: 8, bottom: 12),
-                  child: Column(children: [
-                    const KitobLogo(size: 40),
-                    const SizedBox(height: 16),
-                    IconButton.filledTonal(
-                      tooltip: 'AI ustoz',
-                      onPressed: () => context.go('/home/tutor'),
-                      icon: const Icon(Icons.auto_awesome_rounded),
-                    ),
-                  ]),
+                  child: const KitobLogo(size: 40),
                 ),
                 destinations: [
                   for (final d in _mainDests)
-                    NavigationRailDestination(icon: Icon(d.icon), selectedIcon: Icon(d.selectedIcon), label: Text(d.label.uz)),
+                    NavigationRailDestination(icon: Icon(d.icon), selectedIcon: _PopIcon(d.selectedIcon), label: Text(d.label.uz)),
                 ],
               ),
             ),
@@ -127,23 +124,20 @@ class AppShell extends ConsumerWidget {
     }
     final hideNav = isImmersive(path) && path != '/practice';
     return Scaffold(
-      body: shell,
+      // Kontent navigatsiya ortidan ham ko'rinadi — panel shaffof.
+      extendBody: true,
+      // Immersiv sahifalar (kod muharriri, terminal, dars) o'z tepa qismini chizadi.
+      body: hideNav ? shell : _StatusScrim(child: shell),
       bottomNavigationBar: AnimatedSize(
         duration: KDurations.medium,
         curve: Curves.easeOutCubic,
         alignment: Alignment.topCenter,
         child: hideNav
             ? const SizedBox(width: double.infinity, height: 0)
-            : DecoratedBox(
-                decoration: BoxDecoration(border: Border(top: BorderSide(color: context.k.border))),
-                child: NavigationBar(
-                  selectedIndex: shell.currentIndex,
-                  onDestinationSelected: _goBranch,
-                  destinations: [
-                    for (final d in _mainDests)
-                      NavigationDestination(icon: Icon(d.icon), selectedIcon: Icon(d.selectedIcon), label: d.label.uz),
-                  ],
-                ),
+            : KBottomNav(
+                index: shell.currentIndex,
+                onSelect: _goBranch,
+                items: [for (final d in _mainDests) NavItem(d.label, d.icon, d.selectedIcon)],
               ),
       ),
     );
@@ -196,10 +190,13 @@ class _Sidebar extends ConsumerWidget {
                     Icon(Icons.search_rounded, size: 20, color: k.textMuted),
                     const SizedBox(width: 8),
                     Expanded(child: Text('Qidirish...', style: TextStyle(color: k.textMuted))),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(border: Border.all(color: k.border), borderRadius: BorderRadius.circular(6)),
-                      child: Text('/', style: TextStyle(color: k.textMuted, fontSize: 12)),
+                    Tooltip(
+                      message: 'Qidiruv: / yoki Ctrl/⌘ + K · Barcha yorliqlar: ?'.uz,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(border: Border.all(color: k.border), borderRadius: BorderRadius.circular(6)),
+                        child: Text('/', style: TextStyle(color: k.textMuted, fontSize: 12)),
+                      ),
                     ),
                   ]),
                 ),
@@ -237,7 +234,7 @@ class _Sidebar extends ConsumerWidget {
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(settings.userName.isEmpty ? 'O\'quvchi'.uz : settings.userName,
                           style: context.text.titleSmall, maxLines: 1, overflow: TextOverflow.ellipsis),
-                      Text('${progress.xp} XP · 🔥 ${progress.streak} kun', style: context.text.bodySmall),
+                      Text('Lv ${progress.userLevel} · ${progress.xp} XP · 🔥 ${progress.streak} kun', style: context.text.bodySmall),
                     ]),
                   ),
                 ]),
@@ -261,24 +258,39 @@ class _SideTile extends StatelessWidget {
     final fg = selected ? (context.isDark ? const Color(0xFF8CC8FF) : KColors.primary) : k.textSecondary;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1.5),
-      child: Material(
-        color: selected ? k.primarySoft : Colors.transparent,
-        borderRadius: BorderRadius.circular(KRadius.md),
-        child: InkWell(
+      child: AnimatedContainer(
+        duration: KDurations.medium,
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          color: selected ? k.primarySoft : Colors.transparent,
           borderRadius: BorderRadius.circular(KRadius.md),
-          onTap: () => context.go(item.location),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(children: [
-              Icon(item.icon, size: 20, color: fg),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(item.label.uz,
-                    style: TextStyle(fontWeight: selected ? FontWeight.w700 : FontWeight.w500, color: fg, fontSize: 14)),
-              ),
-              if (selected)
-                Container(width: 6, height: 6, decoration: const BoxDecoration(color: KColors.primary, shape: BoxShape.circle)),
-            ]),
+        ),
+          child: Material(
+          type: MaterialType.transparency,
+          borderRadius: BorderRadius.circular(KRadius.md),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(KRadius.md),
+            onTap: () => context.go(item.location),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(children: [
+                AnimatedScale(scale: selected ? 1.12 : 1, duration: KDurations.medium, curve: Curves.easeOutBack, child: Icon(item.icon, size: 20, color: fg)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AnimatedDefaultTextStyle(
+                    duration: KDurations.fast,
+                    style: TextStyle(fontFamily: kFontFamily, fontWeight: selected ? FontWeight.w700 : FontWeight.w500, color: fg, fontSize: 14),
+                    child: Text(item.label.uz),
+                  ),
+                ),
+                AnimatedScale(
+                  scale: selected ? 1 : 0,
+                  duration: KDurations.medium,
+                  curve: Curves.easeOutBack,
+                  child: Container(width: 6, height: 6, decoration: const BoxDecoration(color: KColors.primary, shape: BoxShape.circle)),
+                ),
+              ]),
+            ),
           ),
         ),
       ),
@@ -286,20 +298,124 @@ class _SideTile extends StatelessWidget {
   }
 }
 
-/// Telefon sahifalarida AI ustozni tez ochish tugmasi.
-class TutorFab extends StatelessWidget {
-  const TutorFab({super.key});
+/// Tanlangan navigatsiya ikonkasi paydo bo'lganda biroz sakrab chiqadi.
+class _PopIcon extends StatelessWidget {
+  const _PopIcon(this.icon);
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) => Reveal(
+    offset: const Offset(0, 5),
+    scale: 0.55,
+    duration: const Duration(milliseconds: 420),
+    child: Icon(icon),
+  );
+}
+
+/// Edge-to-edge sahifalarda status bar ostidagi kontentni yumshoq yashiradi,
+/// shunda soat va batareya belgilari doim o'qiladi.
+class _StatusScrim extends StatelessWidget {
+  const _StatusScrim({required this.child});
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    if (!context.isCompact) return const SizedBox.shrink();
-    return FloatingActionButton(
-      heroTag: 'tutor-fab',
-      tooltip: 'AI ustoz',
-      backgroundColor: KColors.navy,
-      foregroundColor: Colors.white,
-      onPressed: () => context.go('/home/tutor'),
-      child: const Icon(Icons.auto_awesome_rounded),
+    final top = MediaQuery.paddingOf(context).top;
+    if (top == 0) return child;
+    final bg = context.k.background;
+    return Stack(children: [
+      child,
+      Positioned(
+        left: 0,
+        right: 0,
+        top: 0,
+        height: top + 14,
+        child: IgnorePointer(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [bg.withValues(alpha: 0.94), bg.withValues(alpha: 0)],
+                stops: const [0.6, 1],
+              ),
+            ),
+          ),
+        ),
+      ),
+    ]);
+  }
+}
+
+/// Klaviatura yorliqlari (web va desktop):
+/// `/` yoki Ctrl/⌘+K — qidiruv, Alt+1…5 — bo'limlar, `?` — yorliqlar ro'yxati.
+/// Bitta tugmali yorliqlar matn yozilayotganda ishlamaydi.
+class _GlobalShortcuts extends StatelessWidget {
+  const _GlobalShortcuts({required this.onBranch, required this.child});
+  final ValueChanged<int> onBranch;
+  final Widget child;
+
+  static bool get _typing => FocusManager.instance.primaryFocus?.context?.findAncestorStateOfType<EditableTextState>() != null;
+
+  static void showHelp(BuildContext context) => showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text('Klaviatura yorliqlari'.uz),
+      content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        for (final (keys, what) in const [
+          ('/   yoki   Ctrl/⌘ + K', 'Qidiruv'),
+          ('Alt + 1 … 5', 'Bosh sahifa, Darslar, Amaliyot, Testlar, Profil'),
+          ('Ctrl/⌘ + Enter', 'Kodni ishga tushirish (muharrirda)'),
+          ('?', 'Shu oyna'),
+        ])
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              SizedBox(width: 170, child: Text(keys, style: codeStyle(size: 13, weight: FontWeight.w700))),
+              Expanded(child: Text(what.uz, style: ctx.text.bodyMedium)),
+            ]),
+          ),
+      ]),
+      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Yopish'.uz))],
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    void search() => context.go('/home/search');
+    bool unlessTyping(VoidCallback f) {
+      if (_typing) return false;
+      f();
+      return true;
+    }
+
+    return Focus(
+      autofocus: true,
+      onKeyEvent: (node, e) {
+        if (e is! KeyDownEvent) return KeyEventResult.ignored;
+        final k = HardwareKeyboard.instance;
+        final key = e.logicalKey;
+        if ((k.isControlPressed || k.isMetaPressed) && key == LogicalKeyboardKey.keyK) {
+          search();
+          return KeyEventResult.handled;
+        }
+        if (k.isAltPressed) {
+          const digits = [LogicalKeyboardKey.digit1, LogicalKeyboardKey.digit2, LogicalKeyboardKey.digit3, LogicalKeyboardKey.digit4, LogicalKeyboardKey.digit5];
+          final i = digits.indexOf(key);
+          if (i >= 0) {
+            onBranch(i);
+            return KeyEventResult.handled;
+          }
+        }
+        if (k.isControlPressed || k.isMetaPressed || k.isAltPressed) return KeyEventResult.ignored;
+        final handled = switch (e.character) {
+          '/' => unlessTyping(search),
+          '?' => unlessTyping(() => showHelp(context)),
+          _ => false,
+        };
+        return handled ? KeyEventResult.handled : KeyEventResult.ignored;
+      },
+      child: child,
     );
   }
 }

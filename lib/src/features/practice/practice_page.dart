@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/shell.dart';
 import '../../content/curriculum.dart';
+import '../../content/interview.dart';
 import '../../content/model.dart';
+import '../../core/design_system/adaptive.dart';
 import '../../core/design_system/components.dart';
 import '../../core/design_system/rich_text.dart';
 import '../../core/design_system/tokens.dart';
@@ -24,14 +25,18 @@ class PracticePage extends ConsumerWidget {
       (Icons.widgets_rounded, 'Widget laboratoriyasi', 'Flutter widgetlarini jonli o\'zgartiring va mos kodni ko\'ring.', KColors.cyan, '/practice/widgets'),
       (Icons.keyboard_command_key_rounded, 'Terminal laboratoriyasi', 'Xavfsiz virtual terminalda pwd, ls, cd, mkdir, dart run buyruqlari.', KColors.navy, '/practice/terminal'),
       (Icons.rocket_launch_rounded, 'Amaliy loyihalar', 'Kalkulyator, To-Do, Quiz kabi real dasturlarni bosqichma-bosqich yarating.', KColors.orange, '/practice/projects'),
+      (Icons.work_outline_rounded, 'Intervyuga tayyorgarlik', '${interviewQuestions.length} ta eng ko\'p so\'raladigan Dart va Flutter savoli — namunaviy javob va kod bilan.', KColors.pink, '/practice/interview'),
     ];
     final tasks = [
       for (final l in allLessons)
         if (l.task != null && notifier.statusOf(l.id) != LessonStatus.locked) l,
     ];
     return Scaffold(
-      floatingActionButton: const TutorFab(),
+      // Yuqori va pastki chet pagePadding ichida: kontent status bar va shaffof
+      // navigatsiya ortidan o'tadi (edge-to-edge).
       body: SafeArea(
+        top: false,
+        bottom: false,
         child: ListView(
           padding: pagePadding(context),
           children: [
@@ -94,10 +99,11 @@ class _TaskTile extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (ctx) => Scaffold(
-          appBar: AppBar(title: Text(lesson.task!.title.uz)),
-          body: ListView(padding: pagePadding(ctx), children: [
+          extendBodyBehindAppBar: true,
+          appBar: KTopBar(title: lesson.task!.title),
+          body: Builder(builder: (ctx) => ListView(padding: pagePadding(ctx), children: [
             ContentWidth(maxWidth: 900, child: TaskWorkspace(task: lesson.task!, lessonId: lesson.id)),
-          ]),
+          ])),
         ),
       )),
       child: Row(children: [

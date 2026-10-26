@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../content/curriculum.dart';
 import '../../content/glossary.dart';
+import '../../core/design_system/adaptive.dart';
 import '../../core/design_system/components.dart';
 import '../../core/design_system/rich_text.dart';
 import '../../core/design_system/tokens.dart';
@@ -21,8 +22,9 @@ class _GlossaryPageState extends State<GlossaryPage> {
   Widget build(BuildContext context) {
     final items = searchGlossary(_q);
     return Scaffold(
-      appBar: AppBar(title: Text('Atamalar lug\'ati'.uz)),
-      body: ListView(
+      extendBodyBehindAppBar: true,
+      appBar: const KTopBar(title: 'Atamalar lug\'ati'),
+      body: Builder(builder: (context) => ListView(
         padding: pagePadding(context),
         children: [
           ContentWidth(
@@ -39,7 +41,7 @@ class _GlossaryPageState extends State<GlossaryPage> {
                 EmptyState(
                   icon: Icons.search_off_rounded,
                   title: 'Atama topilmadi',
-                  message: '"$_q" bo\'yicha lug\'atda ma\'lumot yo\'q. Boshqa so\'z bilan qidirib ko\'ring yoki AI ustozdan so\'rang.',
+                  message: '"$_q" bo\'yicha lug\'atda ma\'lumot yo\'q. Boshqa so\'z bilan qidirib ko\'ring yoki umumiy qidiruvdan foydalaning.',
                 ),
               for (final t in items)
                 Padding(
@@ -66,7 +68,7 @@ class _GlossaryPageState extends State<GlossaryPage> {
             ]),
           ),
         ],
-      ),
+      )),
     );
   }
 }

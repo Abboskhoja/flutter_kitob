@@ -1,8 +1,7 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/design_system/motion.dart';
 import '../../core/design_system/rich_text.dart';
 import '../../core/design_system/theme.dart';
 import '../../core/design_system/tokens.dart';
@@ -20,122 +19,238 @@ class StoryAnimation extends ConsumerStatefulWidget {
   ConsumerState<StoryAnimation> createState() => _StoryAnimationState();
 }
 
-class _StoryAnimationState extends ConsumerState<StoryAnimation> {
+/// Video kabi ishlaydigan animatsion dars: sahnalar ketma-ket o'ynaydi,
+/// tepada story-progress, pastda subtitr, tezlikni tanlash va qayta ko'rish.
+class _StoryAnimationState extends ConsumerState<StoryAnimation> with SingleTickerProviderStateMixin {
   int _stage = 0;
-  bool _playing = false;
-  Timer? _timer;
+  double _speed = 1;
+  bool _ended = false;
+  bool _started = false;
+
+  // Joriy sahna davomiyligi — sahna progress chizig'i shu bilan silliq to'ladi.
+  late final AnimationController _clock = AnimationController(vsync: this)
+    ..addStatusListener((s) {
+      if (s != AnimationStatus.completed || !mounted) return;
+      if (_stage >= widget.captions.length - 1) {
+        setState(() => _ended = true);
+      } else {
+        setState(() => _stage++);
+        _runScene();
+      }
+    });
+
+  bool get _playing => _clock.isAnimating;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (!reduceMotionOf(context, ref.read(settingsProvider))) _play();
+      // Harakat kamaytirilgan bo'lsa (yoki testda) — o'zi boshlanmaydi, o'quvchi bosadi.
+      if (!reduceMotionOf(context, ref.read(settingsProvider)) && !KMotion.off(context)) _play();
     });
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _clock.dispose();
     super.dispose();
   }
 
+  void _runScene() {
+    _clock.duration = Duration(milliseconds: (widget.interval / _speed).round());
+    _clock.forward(from: 0);
+  }
+
   void _play() {
-    _timer?.cancel();
     setState(() {
-      _playing = true;
-      if (_stage >= widget.captions.length - 1) _stage = 0;
-    });
-    _timer = Timer.periodic(Duration(milliseconds: widget.interval), (t) {
-      if (!mounted) return;
-      if (_stage >= widget.captions.length - 1) {
-        t.cancel();
-        setState(() => _playing = false);
-        return;
+      _started = true;
+      if (_ended) {
+        _ended = false;
+        _stage = 0;
       }
-      setState(() => _stage++);
     });
+    if (_clock.value > 0 && _clock.value < 1) {
+      _clock.forward();
+    } else {
+      _runScene();
+    }
   }
 
   void _pause() {
-    _timer?.cancel();
-    setState(() => _playing = false);
+    _clock.stop();
+    setState(() {});
   }
 
   void _go(int s) {
-    _pause();
-    setState(() => _stage = s.clamp(0, widget.captions.length - 1));
+    _clock.stop();
+    setState(() {
+      _started = true;
+      _ended = false;
+      _stage = s.clamp(0, widget.captions.length - 1);
+      _clock.value = 0;
+    });
+  }
+
+  void _toggle() => _playing ? _pause() : _play();
+
+  void _cycleSpeed() {
+    setState(() => _speed = _speed == 1 ? 1.5 : (_speed == 1.5 ? 0.75 : 1));
+    if (_playing) {
+      final v = _clock.value;
+      _clock.duration = Duration(milliseconds: (widget.interval / _speed).round());
+      _clock.forward(from: v);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final k = context.k;
     final n = widget.captions.length;
+    // Katta tizim shriftida sahna ham mutanosib kattalashadi — matn kesilmasin.
+    final stageH = widget.height * MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.5);
     return Semantics(
-      label: 'Animatsiya, $n bosqich. ${widget.captions[_stage]}'.uz,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: context.isDark ? const [Color(0xFF0F1B33), Color(0xFF111A2E)] : const [Color(0xFFF2F8FF), Colors.white],
-          ),
-          borderRadius: BorderRadius.circular(KRadius.lg),
-          border: Border.all(color: k.border),
-        ),
-        child: Column(children: [
-          SizedBox(
-            height: widget.height,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
-              child: ExcludeSemantics(child: _ScaleToFit(child: widget.builder(context, _stage))),
+      label: 'Animatsion dars, $n sahna. ${widget.captions[_stage]}'.uz,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(KRadius.xl),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: context.isDark ? const [Color(0xFF0F1B33), Color(0xFF111A2E)] : const [Color(0xFFF2F8FF), Colors.white],
             ),
+            border: Border.all(color: k.border),
+            borderRadius: BorderRadius.circular(KRadius.xl),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: AnimatedSwitcher(
-              duration: KDurations.medium,
-              child: Row(
-                key: ValueKey(_stage),
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(color: KColors.primary, borderRadius: BorderRadius.circular(8)),
-                    child: Text('${_stage + 1}/$n', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
+          child: Column(children: [
+            // ── Ekran: sahna + ustidagi story-progress va (to'xtaganda) katta ▶.
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _toggle,
+              child: SizedBox(
+                height: stageH + 34,
+                child: Stack(children: [
+                  Positioned.fill(
+                    top: 34,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                      child: ExcludeSemantics(child: _ScaleToFit(child: widget.builder(context, _stage))),
+                    ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(child: RichUz(widget.captions[_stage], style: context.text.bodyMedium!.copyWith(color: k.text))),
-                ],
+                  Positioned(
+                    left: 12,
+                    right: 12,
+                    top: 12,
+                    child: AnimatedBuilder(
+                      animation: _clock,
+                      builder: (context, _) => Row(children: [
+                        for (var i = 0; i < n; i++)
+                          Expanded(
+                            child: Container(
+                              height: 4,
+                              margin: EdgeInsets.only(right: i == n - 1 ? 0 : 4),
+                              alignment: Alignment.centerLeft,
+                              decoration: BoxDecoration(color: k.borderStrong.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(2)),
+                              child: FractionallySizedBox(
+                                widthFactor: i < _stage || (_ended && i == _stage) ? 1 : (i == _stage ? _clock.value : 0),
+                                child: Container(decoration: BoxDecoration(color: KColors.primary, borderRadius: BorderRadius.circular(2))),
+                              ),
+                            ),
+                          ),
+                      ]),
+                    ),
+                  ),
+                  Positioned(
+                    left: 12,
+                    top: 20,
+                    child: Row(children: [
+                      Icon(Icons.movie_filter_rounded, size: 14, color: k.textMuted),
+                      const SizedBox(width: 4),
+                      Text('${_stage + 1}/$n', style: numberStyle(TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: k.textMuted))),
+                    ]),
+                  ),
+                  if (!_playing && (!_started || _ended))
+                    Positioned.fill(
+                      top: 34,
+                      // Video kabi: sahna yengil xiralashadi, tugma uning ustida.
+                      child: Container(
+                        color: k.surface.withValues(alpha: 0.6),
+                        alignment: Alignment.center,
+                          child: Center(
+                          child: Pop(
+                            trigger: _ended,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: _ended ? 18 : 22, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: KColors.primary,
+                                borderRadius: BorderRadius.circular(KRadius.pill),
+                                boxShadow: [BoxShadow(color: KColors.primary.withValues(alpha: 0.45), blurRadius: 20, offset: const Offset(0, 8))],
+                              ),
+                              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                Icon(_ended ? Icons.replay_rounded : Icons.play_arrow_rounded, color: Colors.white, size: 28),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text((_ended ? 'Yana ko\'rish' : 'Ko\'rish').uz,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                                ),
+                              ]),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ]),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(6, 4, 6, 6),
-            child: Row(children: [
-              IconButton(tooltip: 'Boshidan'.uz, onPressed: () => _go(0), icon: const Icon(Icons.replay_rounded)),
-              IconButton(tooltip: 'Orqaga'.uz, onPressed: _stage == 0 ? null : () => _go(_stage - 1), icon: const Icon(Icons.skip_previous_rounded)),
-              IconButton.filled(
-                tooltip: _playing ? 'Pauza' : 'Ijro',
-                onPressed: _playing ? _pause : _play,
-                icon: Icon(_playing ? Icons.pause_rounded : Icons.play_arrow_rounded),
-              ),
-              IconButton(tooltip: 'Keyingi'.uz, onPressed: _stage >= n - 1 ? null : () => _go(_stage + 1), icon: const Icon(Icons.skip_next_rounded)),
-              const Spacer(),
-              for (var i = 0; i < n; i++)
-                GestureDetector(
-                  onTap: () => _go(i),
-                  child: AnimatedContainer(
-                    duration: KDurations.fast,
-                    width: i == _stage ? 18 : 7,
-                    height: 7,
-                    margin: const EdgeInsets.only(right: 4),
-                    decoration: BoxDecoration(color: i <= _stage ? KColors.primary : k.borderStrong, borderRadius: BorderRadius.circular(4)),
+            // ── Subtitr: doim qorong'i fonda — qalin so'zlar va `kod` ham oq/yorqin o'qiladi.
+            Theme(
+              data: KitobTheme.dark(),
+                child: Container(
+                width: double.infinity,
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: context.isDark ? Colors.black.withValues(alpha: 0.35) : KColors.navy.withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(KRadius.md),
+                ),
+                child: AnimatedSwitcher(
+                  duration: KDurations.medium,
+                  transitionBuilder: (c, a) => FadeTransition(
+                    opacity: a,
+                    child: SlideTransition(position: Tween(begin: const Offset(0, 0.25), end: Offset.zero).animate(a), child: c),
+                  ),
+                  child: RichUz(
+                    widget.captions[_stage],
+                    key: ValueKey(_stage),
+                    style: context.text.bodyMedium!.copyWith(color: Colors.white, height: 1.45),
                   ),
                 ),
-              const SizedBox(width: 8),
-            ]),
-          ),
-        ]),
+              ),
+            ),
+            // ── Boshqaruv.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(6, 6, 10, 8),
+              child: Row(children: [
+                IconButton(tooltip: 'Boshidan'.uz, onPressed: () => _go(0), icon: const Icon(Icons.replay_rounded)),
+                IconButton(tooltip: 'Oldingi sahna'.uz, onPressed: _stage == 0 ? null : () => _go(_stage - 1), icon: const Icon(Icons.skip_previous_rounded)),
+                IconButton.filled(
+                  tooltip: (_playing ? 'Pauza' : 'Ijro').uz,
+                  onPressed: _toggle,
+                  icon: Icon(_playing ? Icons.pause_rounded : Icons.play_arrow_rounded),
+                ),
+                IconButton(tooltip: 'Keyingi sahna'.uz, onPressed: _stage >= n - 1 ? null : () => _go(_stage + 1), icon: const Icon(Icons.skip_next_rounded)),
+                const Spacer(),
+                TextButton(
+                  onPressed: _cycleSpeed,
+                  child: Text('${_speed == 0.75 ? '0.75' : _speed == 1.5 ? '1.5' : '1'}×', style: numberStyle(const TextStyle(fontWeight: FontWeight.w800))),
+                ),
+              ]),
+            ),
+          ]),
+        ),
       ),
     );
   }
@@ -150,14 +265,20 @@ class _ScaleToFit extends StatelessWidget {
   final Widget child;
   static const _minWidth = 440.0;
 
+  /// Sahna mazmuni kamida [_minWidth] kenglikda chiziladi va joyga kenglik
+  /// hamda balandlik bo'yicha sig'diriladi: kichik bo'lsa — markazda, katta
+  /// bo'lsa (tor ekran, katta shrift) — butunligicha kichrayadi, kesilmaydi.
   @override
   Widget build(BuildContext context) => LayoutBuilder(builder: (context, box) {
-    if (box.maxWidth >= _minWidth || !box.hasBoundedHeight) return child;
-    final scale = box.maxWidth / _minWidth;
+    if (!box.hasBoundedHeight) return child;
+    final w = box.maxWidth < _minWidth ? _minWidth : box.maxWidth;
+    final scale = box.maxWidth / w;
     return FittedBox(
-      fit: BoxFit.contain,
-      alignment: Alignment.topCenter,
-      child: SizedBox(width: _minWidth, height: box.maxHeight / scale, child: child),
+      fit: BoxFit.scaleDown,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minWidth: w, maxWidth: w, minHeight: box.maxHeight / scale),
+        child: child,
+      ),
     );
   });
 }

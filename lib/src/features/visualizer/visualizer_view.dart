@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kitob_dart/kitob_dart.dart';
 
+import '../../core/design_system/adaptive.dart';
 import '../../core/design_system/components.dart';
 import '../../core/design_system/rich_text.dart';
 import '../../core/design_system/theme.dart';
@@ -296,11 +297,12 @@ Future<void> showVisualizer(BuildContext context, String code, {List<String> std
   MaterialPageRoute<void>(
     fullscreenDialog: true,
     builder: (ctx) => Scaffold(
-      appBar: AppBar(title: Text('Qadam-baqadam bajarish'.uz)),
-      body: ListView(
+      extendBodyBehindAppBar: true,
+      appBar: const KTopBar(close: true, title: 'Qadam-baqadam bajarish'),
+      body: Builder(builder: (ctx) => ListView(
         padding: pagePadding(ctx),
         children: [ContentWidth(child: VisualizerView(code: code, stdin: stdin))],
-      ),
+      )),
     ),
   ),
 );

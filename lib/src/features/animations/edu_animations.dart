@@ -6,6 +6,8 @@ import '../../core/design_system/components.dart';
 import '../../core/design_system/rich_text.dart';
 import '../../core/design_system/theme.dart';
 import '../../core/design_system/tokens.dart';
+import 'edu_animations_more.dart';
+import 'flutter_labs.dart';
 import 'story.dart';
 
 typedef AnimBuilder = Widget Function();
@@ -39,6 +41,20 @@ final Map<String, AnimBuilder> eduAnimations = {
   'async_await': () => const _AsyncAwait(),
   'event_loop': () => const _EventLoop(),
   'stream_flow': () => const _StreamFlow(),
+  // Interaktiv laboratoriyalar (flutter_labs.dart): haqiqiy layout va rebuild.
+  'layout_constraints': () => const ConstraintsLab(),
+  'state_rebuild': () => const RebuildLab(),
+  // Qo'shimcha animatsion tushuntirishlar (edu_animations_more.dart).
+  'operators': () => const OperatorsAnim(),
+  'type_convert': () => const TypeConvertAnim(),
+  'switch_lanes': () => const SwitchAnim(),
+  'constructor': () => const ConstructorAnim(),
+  'try_catch': () => const TryCatchAnim(),
+  'stateless_props': () => const StatelessPropsAnim(),
+  'list_builder': () => const ListBuilderAnim(),
+  'scaffold_parts': () => const ScaffoldPartsAnim(),
+  'input_flow': () => const InputFlowAnim(),
+  'flex_split': () => const FlexSplitAnim(),
 };
 
 class EduAnimation extends StatelessWidget {

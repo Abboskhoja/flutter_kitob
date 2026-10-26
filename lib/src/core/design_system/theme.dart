@@ -2,14 +2,30 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'adaptive.dart';
 import 'tokens.dart';
 
+/// Tipografiya tizimi (barcha shriftlar lokal asset, OFL):
+/// * [kFontFamily] Inter — asosiy matn va interfeys.
+/// * [kHeadingFont] Nunito — do'stona sarlavhalar (o'zbek lotin ʻ va kirill to'liq).
+/// * [kNumberFont] Manrope — faqat raqamlar/statistika (ʻ glifi yo'q — matnga emas).
+/// * [kCodeFont] JetBrains Mono — kod.
 const kFontFamily = 'Inter';
+const kHeadingFont = 'Nunito';
+const kNumberFont = 'Manrope';
 const kCodeFont = 'JetBrainsMono';
 
+/// Statistik raqamlar: bir xil kenglikdagi (tabular) raqamlar — sanash
+/// animatsiyasida matn "sakramaydi".
+TextStyle numberStyle(TextStyle base) => base.copyWith(
+  fontFamily: kNumberFont,
+  fontFamilyFallback: const [kFontFamily],
+  fontFeatures: const [FontFeature.tabularFigures()],
+);
+
 abstract final class KitobTheme {
-  static ThemeData light() => _build(Brightness.light, KitobColors.light);
-  static ThemeData dark() => _build(Brightness.dark, KitobColors.dark);
+  static ThemeData light([KLook look = KLook.material]) => _build(Brightness.light, KitobColors.light, look);
+  static ThemeData dark([KLook look = KLook.material]) => _build(Brightness.dark, KitobColors.dark, look);
 
   static TextTheme _text(Color strong, Color body, Color muted) => TextTheme(
     displaySmall: TextStyle(fontSize: 34, fontWeight: FontWeight.w800, height: 1.15, letterSpacing: -0.8, color: strong),
@@ -27,7 +43,7 @@ abstract final class KitobTheme {
     labelSmall: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, height: 1.2, letterSpacing: 0.3, color: muted),
   );
 
-  static ThemeData _build(Brightness b, KitobColors k) {
+  static ThemeData _build(Brightness b, KitobColors k, KLook look) {
     final isDark = b == Brightness.dark;
     final scheme = ColorScheme.fromSeed(
       seedColor: KColors.primary,
@@ -37,7 +53,17 @@ abstract final class KitobTheme {
       error: KColors.error,
       surface: k.surface,
     );
-    final text = _text(k.text, k.textSecondary, k.textMuted).apply(fontFamily: kFontFamily);
+    final base = _text(k.text, k.textSecondary, k.textMuted).apply(fontFamily: kFontFamily);
+    // Sarlavhalar Nunito'da: Inter'dan biroz kengroq, shuning uchun harf oralig'i kamroq siqiladi.
+    TextStyle? h(TextStyle? t, {double spacing = -0.3}) =>
+        t?.copyWith(fontFamily: kHeadingFont, fontFamilyFallback: const [kFontFamily], letterSpacing: spacing, fontWeight: FontWeight.w800);
+    final text = base.copyWith(
+      displaySmall: h(base.displaySmall, spacing: -0.6)?.copyWith(fontWeight: FontWeight.w900),
+      headlineLarge: h(base.headlineLarge, spacing: -0.5)?.copyWith(fontWeight: FontWeight.w900),
+      headlineMedium: h(base.headlineMedium, spacing: -0.4),
+      headlineSmall: h(base.headlineSmall),
+      titleLarge: h(base.titleLarge, spacing: -0.1),
+    );
     return ThemeData(
       useMaterial3: true,
       brightness: b,
@@ -46,7 +72,12 @@ abstract final class KitobTheme {
       scaffoldBackgroundColor: k.background,
       textTheme: text,
       extensions: [k],
-      splashFactory: InkSparkle.splashFactory,
+      // iOS'da to'lqin (ripple) yo'q — faqat yengil highlight; Android'da Material sparkle.
+      splashFactory: switch (look) {
+        KLook.glass => NoSplash.splashFactory,
+        KLook.material => InkSparkle.splashFactory,
+        KLook.web => InkRipple.splashFactory,
+      },
       visualDensity: VisualDensity.standard,
       appBarTheme: AppBarTheme(
         backgroundColor: k.background,
@@ -168,7 +199,8 @@ abstract final class KitobTheme {
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
-          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+          // Android 14+ "predictive back": orqaga surish paytida oldingi sahifa ko'rinadi.
+          TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
           TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
           TargetPlatform.macOS: FadeForwardsPageTransitionsBuilder(),
           TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(),

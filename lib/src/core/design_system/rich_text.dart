@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import '../i18n/kitob_localizations.dart';
 import 'theme.dart';
 import 'tokens.dart';
 
@@ -30,14 +31,23 @@ String uzify(String text) {
   return out.toString();
 }
 
-String _typography(String s) => s.replaceAllMapped(_apostropheBetweenLetters, (m) {
+String _typography(String s) => s.replaceAllMapped(_apostropheBetweenLetters, (
+  m,
+) {
   final prev = m.start > 0 ? s[m.start - 1] : '';
   return (prev == 'o' || prev == 'O' || prev == 'g' || prev == 'G') ? '‘' : '’';
 });
 
 /// `**qalin**` va `` `kod` `` belgilashli matnni chiroyli ko'rsatadi.
 class RichUz extends StatelessWidget {
-  const RichUz(this.text, {super.key, this.style, this.textAlign, this.maxLines, this.onCodeTap});
+  const RichUz(
+    this.text, {
+    super.key,
+    this.style,
+    this.textAlign,
+    this.maxLines,
+    this.onCodeTap,
+  });
 
   final String text;
   final TextStyle? style;
@@ -49,7 +59,14 @@ class RichUz extends StatelessWidget {
   Widget build(BuildContext context) {
     final base = style ?? context.text.bodyLarge!;
     return Text.rich(
-      TextSpan(children: buildSpans(context, uzify(text), base, onCodeTap: onCodeTap)),
+      TextSpan(
+        children: buildSpans(
+          context,
+          uzify(KitobLocalizations.text(text)),
+          base,
+          onCodeTap: onCodeTap,
+        ),
+      ),
       style: base,
       textAlign: textAlign,
       maxLines: maxLines,
@@ -57,28 +74,47 @@ class RichUz extends StatelessWidget {
     );
   }
 
-  static List<InlineSpan> buildSpans(BuildContext context, String text, TextStyle base,
-      {void Function(String code)? onCodeTap}) {
+  static List<InlineSpan> buildSpans(
+    BuildContext context,
+    String text,
+    TextStyle base, {
+    void Function(String code)? onCodeTap,
+  }) {
     final k = context.k;
     final spans = <InlineSpan>[];
     final pattern = RegExp(r'(\*\*[^*]+\*\*|`[^`]+`)');
     var last = 0;
     for (final m in pattern.allMatches(text)) {
-      if (m.start > last) spans.add(TextSpan(text: text.substring(last, m.start)));
+      if (m.start > last) {
+        spans.add(TextSpan(text: text.substring(last, m.start)));
+      }
       final tok = m.group(0)!;
       if (tok.startsWith('**')) {
-        spans.add(TextSpan(
-          text: tok.substring(2, tok.length - 2),
-          style: TextStyle(fontWeight: FontWeight.w700, color: k.text),
-        ));
+        final inner = tok.substring(2, tok.length - 2);
+        final bold = TextStyle(fontWeight: FontWeight.w700, color: k.text);
+        // `**`int`**` — qalin matn ichidagi kod ham kod sifatida chiziladi
+        // (teskari tirnoqlar ko'rinib qolmasin).
+        spans.add(
+          inner.contains('`')
+              ? TextSpan(style: bold, children: buildSpans(context, inner, base.merge(bold), onCodeTap: onCodeTap))
+              : TextSpan(text: inner, style: bold),
+        );
       } else {
         final code = tok.substring(1, tok.length - 1);
-        spans.add(TextSpan(
-          text: ' $code ',
-          recognizer: onCodeTap == null ? null : (TapGestureRecognizer()..onTap = () => onCodeTap(code)),
-          style: codeStyle(size: (base.fontSize ?? 15) * 0.9, color: context.isDark ? const Color(0xFF8CC8FF) : const Color(0xFF0B5CC4))
-              .copyWith(backgroundColor: k.primarySoft, height: base.height),
-        ));
+        spans.add(
+          TextSpan(
+            text: ' $code ',
+            recognizer: onCodeTap == null
+                ? null
+                : (TapGestureRecognizer()..onTap = () => onCodeTap(code)),
+            style: codeStyle(
+              size: (base.fontSize ?? 15) * 0.9,
+              color: context.isDark
+                  ? const Color(0xFF8CC8FF)
+                  : const Color(0xFF0B5CC4),
+            ).copyWith(backgroundColor: k.primarySoft, height: base.height),
+          ),
+        );
       }
       last = m.end;
     }
@@ -99,27 +135,47 @@ class RichUzBlocks extends StatelessWidget {
     if (parts.length < 3) return RichUz(text, style: style);
     final k = context.k;
     final base = style ?? context.text.bodyLarge!;
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      for (var i = 0; i < parts.length; i++)
-        if (i.isOdd)
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 6),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: k.surfaceAlt, borderRadius: BorderRadius.circular(KRadius.sm), border: Border.all(color: k.border)),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Text(parts[i].replaceAll(RegExp(r'^\n|\n$'), ''), style: codeStyle(size: (base.fontSize ?? 15) * 0.85, color: k.text)),
-            ),
-          )
-        else if (parts[i].trim().isNotEmpty)
-          RichUz(parts[i].trim(), style: base),
-    ]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < parts.length; i++)
+          if (i.isOdd)
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 6),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: k.surfaceAlt,
+                borderRadius: BorderRadius.circular(KRadius.sm),
+                border: Border.all(color: k.border),
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Text(
+                  parts[i].replaceAll(RegExp(r'^\n|\n$'), ''),
+                  style: codeStyle(
+                    size: (base.fontSize ?? 15) * 0.85,
+                    color: k.text,
+                  ),
+                ),
+              ),
+            )
+          else if (parts[i].trim().isNotEmpty)
+            RichUz(parts[i].trim(), style: base),
+      ],
+    );
   }
 }
 
 /// Oddiy matn — faqat tipografik apostroflar bilan.
 class UzText extends StatelessWidget {
-  const UzText(this.text, {super.key, this.style, this.maxLines, this.textAlign, this.overflow});
+  const UzText(
+    this.text, {
+    super.key,
+    this.style,
+    this.maxLines,
+    this.textAlign,
+    this.overflow,
+  });
   final String text;
   final TextStyle? style;
   final int? maxLines;
@@ -128,7 +184,7 @@ class UzText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-    uzify(text).replaceAll('`', ''),
+    uzify(KitobLocalizations.text(text)).replaceAll('`', ''),
     style: style,
     maxLines: maxLines,
     textAlign: textAlign,
@@ -137,7 +193,7 @@ class UzText extends StatelessWidget {
 }
 
 extension UzString on String {
-  String get uz => uzify(this).replaceAll('`', '');
+  String get uz => uzify(KitobLocalizations.text(this)).replaceAll('`', '');
 }
 
 /// Matndagi `kod` bo'laklarini olib tashlamasdan ko'rsatish uchun yordamchi.
@@ -149,7 +205,16 @@ class KodChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-    decoration: BoxDecoration(color: color ?? context.k.primarySoft, borderRadius: BorderRadius.circular(6)),
-    child: Text(code, style: codeStyle(size: 13, color: context.isDark ? const Color(0xFF8CC8FF) : KColors.primary)),
+    decoration: BoxDecoration(
+      color: color ?? context.k.primarySoft,
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Text(
+      code,
+      style: codeStyle(
+        size: 13,
+        color: context.isDark ? const Color(0xFF8CC8FF) : KColors.primary,
+      ),
+    ),
   );
 }

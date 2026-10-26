@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/design_system/adaptive.dart';
 import '../../core/design_system/components.dart';
 import '../../core/design_system/rich_text.dart';
 import '../../core/design_system/theme.dart';
@@ -93,10 +94,11 @@ class _TerminalPageState extends ConsumerState<TerminalPage> {
     final saved = await Navigator.of(context).push<bool>(MaterialPageRoute(
       fullscreenDialog: true,
       builder: (ctx) => Scaffold(
-        appBar: AppBar(
-          title: Text(path.split('/').last),
+        appBar: KTopBar(
+          close: true,
+          title: path.split('/').last,
           actions: [
-            TextButton.icon(onPressed: () => Navigator.pop(ctx, true), icon: const Icon(Icons.save_rounded), label: Text('Saqlash'.uz)),
+            KButton(label: 'Saqlash', icon: Icons.save_rounded, compact: true, onPressed: () => Navigator.pop(ctx, true)),
           ],
         ),
         body: KitobCodeEditor(controller: ctrl, analyze: path.endsWith('.dart'), onSave: () => Navigator.pop(ctx, true)),
@@ -263,15 +265,21 @@ class _TerminalPageState extends ConsumerState<TerminalPage> {
     });
 
     return Scaffold(
-      appBar: AppBar(
-        leading: context.isExpanded ? null : IconButton(onPressed: () => context.canPop() ? context.pop() : context.go('/practice'), icon: const Icon(Icons.arrow_back_rounded)),
-        title: Text('Terminal laboratoriyasi'.uz),
+      backgroundColor: context.k.console,
+      appBar: KTopBar(
+        dark: true,
+        background: context.k.console,
+        title: 'Terminal laboratoriyasi',
+        onBack: () => context.canPop() ? context.pop() : context.go('/practice'),
+        showBack: !context.isExpanded,
         actions: [
           if (!wide)
-            IconButton(
+            GlassIconButton(
+              dark: true,
               tooltip: 'Missiyalar',
               onPressed: () => showKSheet<void>(context, builder: (ctx) => missions),
-              icon: Badge(label: Text('${_done.length}/${terminalMissions.length}'), child: const Icon(Icons.flag_rounded)),
+              icon: Icons.flag_rounded,
+              badge: KBadge('${_done.length}/${terminalMissions.length}', color: KColors.error, solid: true),
             ),
         ],
       ),

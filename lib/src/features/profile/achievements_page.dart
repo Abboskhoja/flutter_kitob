@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/design_system/adaptive.dart';
 import '../../core/design_system/components.dart';
 import '../../core/design_system/rich_text.dart';
 import '../../core/design_system/tokens.dart';
@@ -13,8 +14,9 @@ class AchievementsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final p = ref.watch(progressProvider);
     return Scaffold(
-      appBar: AppBar(title: Text('Yutuqlar'.uz)),
-      body: ListView(padding: pagePadding(context), children: [
+      extendBodyBehindAppBar: true,
+      appBar: const KTopBar(title: 'Yutuqlar'),
+      body: Builder(builder: (context) => ListView(padding: pagePadding(context), children: [
         ContentWidth(
           maxWidth: 900,
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -51,7 +53,7 @@ class AchievementsPage extends ConsumerWidget {
             }),
           ]),
         ),
-      ]),
+      ])),
     );
   }
 }

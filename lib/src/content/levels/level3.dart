@@ -757,6 +757,7 @@ void main() {
       'Bankomat ichidagi pullar (private _balans) to\'g\'ridan-to\'g\'ri qo\'lingizga berilmaydi. Siz faqat ekran (getter — balansni ko\'rish) va tugmalar (setter/metod — tekshiruv bilan pul yechish) orqali ishlaysiz. Bu inkapsulyatsiya.',
       icon: Icons.atm_outlined,
     ),
+    animation: AnimationBlock('constructor', 'Bitta chizma (class) — ko\'p mustaqil obyekt.'),
     why: 'Noto\'g\'ri qiymatlar (manfiy yosh, manfiy balans) dasturni buzadi. Inkapsulyatsiya obyektni noto\'g\'ri holatdan himoya qiladi. Nomli konstruktorlar esa JSON dan obyekt yaratishda keng qo\'llanadi: `User.fromJson(map)`.',
     where: [
       'JSON: `Mahsulot.fromJson(Map<String, dynamic> j)`',
@@ -1579,6 +1580,7 @@ void main() {
       'Sirk akrobati (try) murakkab harakat qiladi. Pastda xavfsizlik to\'ri (catch) bor — yiqilsa, to\'r ushlab qoladi va tomosha davom etadi. finally — tomosha qanday tugashidan qat\'i nazar, oxirida chiroqlar yoqiladi.',
       icon: Icons.sports_gymnastics_rounded,
     ),
+    animation: AnimationBlock('try_catch', 'Xato otiladi → `try/catch` uni ushlaydi → dastur to\'xtamaydi.'),
     why: 'Haqiqiy ilovalarda internet, server, foydalanuvchi kiritmasi — hammasi ishonchsiz. Xatolarni to\'g\'ri boshqarish "ilova to\'xtab qoldi" o\'rniga "Internet yo\'q, qayta urinib ko\'ring" deyishga imkon beradi.',
     where: [
       'API so\'rovlari: tarmoq xatolari',

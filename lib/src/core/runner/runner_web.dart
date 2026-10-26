@@ -4,10 +4,13 @@ import 'package:kitob_dart/kitob_dart.dart';
 
 import 'runner.dart' show stoppedResult;
 
-/// Webda isolate yo'q: asosiy oqim qotib qolmasligi uchun limitlar qisqaroq.
+/// Web runner sinxron ishlaydi, shuning uchun kod asosiy oqimda qat'iy limit bilan bajariladi.
+const _webMaxSteps = 500000;
+const _webTimeout = Duration(seconds: 1);
+
 ExecutionOptions adjustOptions(ExecutionOptions o) => ExecutionOptions(
-  maxSteps: o.maxSteps > 2000000 ? 2000000 : o.maxSteps,
-  timeout: o.timeout > const Duration(seconds: 3) ? const Duration(seconds: 3) : o.timeout,
+  maxSteps: o.maxSteps > _webMaxSteps ? _webMaxSteps : o.maxSteps,
+  timeout: o.timeout > _webTimeout ? _webTimeout : o.timeout,
   trace: o.trace,
   maxTraceSteps: o.maxTraceSteps,
   stdin: o.stdin,
@@ -33,4 +36,5 @@ class PlatformRun {
   }
 }
 
+// Yield one frame before CPU work; this is not a background isolate on Web.
 Future<R> computeHeavy<A, R>(R Function(A) fn, A arg) => Future.delayed(const Duration(milliseconds: 16), () => fn(arg));

@@ -209,6 +209,7 @@ void main() {
       'Liftda har bir tugma — bitta case: 1 bosilsa 1-qavat, 5 bosilsa 5-qavat. Mavjud bo\'lmagan qavat bosilsa — default: "Bunday qavat yo\'q".',
       icon: Icons.elevator_outlined,
     ),
+    animation: AnimationBlock('switch_lanes', 'Qiymat `case` larni birma-bir tekshirib, mos keladigan yo\'lakka tushadi.'),
     why: 'Menyular, holatlar (yuklanmoqda / tayyor / xato), buyruqlar — switch bilan toza va xatosiz yoziladi. Dart hatto enum uchun barcha holatlar qamrab olinganini tekshiradi.',
     where: [
       'Navigatsiya tablari: indeksga qarab sahifa',

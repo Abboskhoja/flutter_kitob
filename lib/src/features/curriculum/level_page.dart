@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../content/curriculum.dart';
 import '../../content/model.dart';
+import '../../core/design_system/adaptive.dart';
 import '../../core/design_system/components.dart';
+import '../../core/design_system/motion.dart';
 import '../../core/design_system/rich_text.dart';
 import '../../core/design_system/tokens.dart';
 import '../../core/state/progress.dart';
@@ -18,8 +20,9 @@ class LevelPage extends ConsumerWidget {
     final level = curriculum.where((l) => l.number == number).firstOrNull;
     if (level == null) {
       return Scaffold(
-        appBar: AppBar(),
-        body: const EmptyState(icon: Icons.search_off_rounded, title: 'Daraja topilmadi', message: 'Bunday daraja o\'quv dasturida yo\'q.'),
+        extendBodyBehindAppBar: true,
+        appBar: const KTopBar(),
+        body: Builder(builder: (context) => const EmptyState(icon: Icons.search_off_rounded, title: 'Daraja topilmadi', message: 'Bunday daraja o\'quv dasturida yo\'q.')),
       );
     }
     final progress = ref.watch(progressProvider);
@@ -27,39 +30,48 @@ class LevelPage extends ConsumerWidget {
     final done = level.lessons.where((l) => progress.isCompleted(l.id)).length;
     // Tayyor darslar qamrab olmagan mavzular (rejadagi qolgan qism).
     return Scaffold(
-      appBar: AppBar(title: Text('${level.number}-daraja'.uz)),
-      body: ListView(
+      extendBodyBehindAppBar: true,
+      appBar: KTopBar(title: '${level.number}-daraja', subtitle: level.title),
+      body: Builder(builder: (context) => ListView(
         padding: pagePadding(context),
         children: [
           ContentWidth(
             maxWidth: 860,
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              // Telefonda ham keng: ikonka va progress yuqorida, matn to'liq kenglikda.
               KCard(
-                gradient: LinearGradient(colors: [level.color.withValues(alpha: 0.16), level.color.withValues(alpha: 0.04)]),
-                child: Row(children: [
-                  KIconBox(level.icon, color: level.color, size: 58, filled: true),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      UzText(level.title, style: context.text.headlineSmall),
-                      const SizedBox(height: 4),
-                      UzText(level.subtitle, style: context.text.bodyMedium),
-                      if (level.outcome.isNotEmpty) ...[
-                        const SizedBox(height: 10),
-                        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Icon(Icons.flag_rounded, size: 18, color: level.color),
-                          const SizedBox(width: 6),
-                          Expanded(child: RichUz(level.outcome, style: context.text.bodyMedium)),
-                        ]),
-                      ],
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [level.color.withValues(alpha: 0.2), level.color.withValues(alpha: 0.04)],
+                ),
+                borderColor: level.color.withValues(alpha: 0.3),
+                padding: const EdgeInsets.all(KSpace.xl),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    Floaty(amplitude: 3, child: KIconBox(level.icon, color: level.color, size: 58, filled: true)),
+                    const Spacer(),
+                    if (level.isReady)
+                      KProgressRing(
+                        value: done / level.lessons.length,
+                        color: level.color,
+                        center: Text('$done/${level.lessons.length}', style: const TextStyle(fontWeight: FontWeight.w800)),
+                      ),
+                  ]),
+                  const SizedBox(height: 14),
+                  if (level.rank != null)
+                    Text(level.rank!, style: context.text.labelSmall?.copyWith(color: level.color, letterSpacing: 1.2, fontWeight: FontWeight.w800)),
+                  UzText(level.title, style: context.text.headlineSmall),
+                  const SizedBox(height: 4),
+                  UzText(level.subtitle, style: context.text.bodyMedium),
+                  if (level.outcome.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Icon(Icons.flag_rounded, size: 18, color: level.color),
+                      const SizedBox(width: 6),
+                      Expanded(child: RichUz(level.outcome, style: context.text.bodyMedium)),
                     ]),
-                  ),
-                  if (level.isReady)
-                    KProgressRing(
-                      value: done / level.lessons.length,
-                      color: level.color,
-                      center: Text('$done/${level.lessons.length}', style: const TextStyle(fontWeight: FontWeight.w800)),
-                    ),
+                  ],
                 ]),
               ),
               const SizedBox(height: KSpace.lg),
@@ -155,7 +167,7 @@ class LevelPage extends ConsumerWidget {
             ]),
           ),
         ],
-      ),
+      )),
     );
   }
 }

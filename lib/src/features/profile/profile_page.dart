@@ -9,6 +9,7 @@ import '../../core/design_system/rich_text.dart';
 import '../../core/design_system/tokens.dart';
 import '../../core/state/progress.dart';
 import '../../core/state/settings.dart';
+import 'profile_widgets.dart';
 
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
@@ -20,7 +21,11 @@ class ProfilePage extends ConsumerWidget {
     final minutes = p.counter(Counters.secondsLearned) ~/ 60;
     final name = s.userName.isEmpty ? 'O\'quvchi' : s.userName;
     return Scaffold(
+      // Yuqori va pastki chet pagePadding ichida: kontent status bar va shaffof
+      // navigatsiya ortidan o'tadi (edge-to-edge).
       body: SafeArea(
+        top: false,
+        bottom: false,
         child: ListView(padding: pagePadding(context), children: [
           ContentWidth(
             maxWidth: 900,
@@ -42,11 +47,11 @@ class ProfilePage extends ConsumerWidget {
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(name.uz, style: context.text.headlineSmall!.copyWith(color: Colors.white)),
-                      Text('${p.userLevel}-daraja · ${p.xp} XP · ${s.startLevel.title}'.uz, style: const TextStyle(color: Colors.white70)),
+                      Text('Lv ${p.userLevel} · ${p.xp} XP · ${s.startLevel.title}'.uz, style: const TextStyle(color: Colors.white70)),
                       const SizedBox(height: 8),
                       KProgressBar(value: p.levelProgress, color: Colors.white, height: 6),
                       const SizedBox(height: 4),
-                      Text('Keyingi darajagacha ${p.xpToNext} XP'.uz, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                      Text('Lv ${p.userLevel + 1} gacha ${p.xpToNext} XP'.uz, style: const TextStyle(color: Colors.white70, fontSize: 12)),
                     ]),
                   ),
                 ]),
@@ -67,6 +72,10 @@ class ProfilePage extends ConsumerWidget {
                   for (final (i, v, l, c) in stats) SizedBox(width: w, child: StatTile(icon: i, value: v, label: l, color: c)),
                 ]);
               }),
+              const SizedBox(height: KSpace.lg),
+              ActivityHeatmap(progress: p),
+              const SizedBox(height: KSpace.xl),
+              CertificatesSection(progress: p, name: name),
               const SizedBox(height: KSpace.xl),
               SectionHeader('Ko\'nikmalar', subtitle: 'Darslar bo\'yicha o\'zlashtirish', icon: Icons.insights_rounded),
               KCard(

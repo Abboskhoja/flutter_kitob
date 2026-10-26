@@ -5,6 +5,7 @@ import 'package:kitob_dart/kitob_dart.dart';
 
 import '../../content/model.dart';
 import '../../core/design_system/components.dart';
+import '../../core/design_system/motion.dart';
 import '../../core/design_system/rich_text.dart';
 import '../../core/design_system/theme.dart';
 import '../../core/design_system/tokens.dart';
@@ -73,14 +74,27 @@ class _RunnableCodeState extends ConsumerState<RunnableCode> {
         code: _code,
         actions: [
           if (b.editable && b.runnable)
-            TextButton.icon(
-              onPressed: () => setState(() {
-                _editing = !_editing;
-                if (!_editing) _ctrl.text = b.code;
-              }),
-              icon: Icon(_editing ? Icons.undo_rounded : Icons.edit_rounded, size: 16),
-              label: Text((_editing ? 'Asliga qaytarish' : 'Tahrirlash').uz),
-            ),
+            // Telefonda faqat ikonka — kod oynasi nomi kesilib qolmasin.
+            context.isCompact
+                ? IconButton(
+                    tooltip: (_editing ? 'Asliga qaytarish' : 'Tahrirlash').uz,
+                    visualDensity: VisualDensity.compact,
+                    iconSize: 18,
+                    color: KColors.primary,
+                    onPressed: () => setState(() {
+                      _editing = !_editing;
+                      if (!_editing) _ctrl.text = b.code;
+                    }),
+                    icon: Icon(_editing ? Icons.undo_rounded : Icons.edit_rounded),
+                  )
+                : TextButton.icon(
+                    onPressed: () => setState(() {
+                      _editing = !_editing;
+                      if (!_editing) _ctrl.text = b.code;
+                    }),
+                    icon: Icon(_editing ? Icons.undo_rounded : Icons.edit_rounded, size: 16),
+                    label: Text((_editing ? 'Asliga qaytarish' : 'Tahrirlash').uz),
+                  ),
         ],
         child: _editing
             ? KitobCodeEditor(key: _editorKey, controller: _ctrl, expands: false, minLines: 3, onRun: _run, showKeyBar: context.isCompact)
@@ -104,6 +118,7 @@ class _RunnableCodeState extends ConsumerState<RunnableCode> {
             compact: true,
             loading: _running,
             onPressed: _run,
+            tooltip: _editing && !context.isCompact ? 'Ctrl/⌘ + Enter' : null,
           ),
           if (b.visualize && !b.preview)
             KButton(
@@ -125,16 +140,29 @@ class _RunnableCodeState extends ConsumerState<RunnableCode> {
           const SizedBox(height: 12),
           Center(child: FlutterPreview(source: _previewSource!, height: 460, onJumpToLine: _editing ? (l) => _editorKey.currentState?.jumpToLine(l) : null)),
         ],
-        if (_result != null || _running) ...[
-          const SizedBox(height: 10),
-          if (_result != null && !_result!.compiled) ...[
-            ProblemsView(
-              diagnostics: _result!.diagnostics.where((d) => d.isError).toList(),
-              onTap: _editing ? (d) => _editorKey.currentState?.jumpToLine(d.line) : null,
-            ),
-          ] else
-            ConsoleView(result: _result, running: _running),
-        ],
+        // Natija har ishga tushirishda yumshoq paydo bo'ladi — ko'z o'zgarishni sezadi.
+        AnimatedSize(
+          duration: KDurations.medium,
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: _result != null || _running
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Reveal(
+                    key: ValueKey(_result),
+                    offset: const Offset(0, 10),
+                    scale: 0.98,
+                    duration: const Duration(milliseconds: 360),
+                    child: _result != null && !_result!.compiled
+                        ? ProblemsView(
+                            diagnostics: _result!.diagnostics.where((d) => d.isError).toList(),
+                            onTap: _editing ? (d) => _editorKey.currentState?.jumpToLine(d.line) : null,
+                          )
+                        : ConsoleView(result: _result, running: _running),
+                  ),
+                )
+              : const SizedBox(width: double.infinity),
+        ),
       ],
       if (notes.isNotEmpty) ...[
         const SizedBox(height: 10),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/design_system/adaptive.dart';
 import '../../core/design_system/components.dart';
 import '../../core/design_system/rich_text.dart';
 import '../../core/design_system/tokens.dart';
@@ -43,11 +44,9 @@ class _VisualizerPageState extends State<VisualizerPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      leading: context.isExpanded ? null : IconButton(onPressed: () => context.canPop() ? context.pop() : context.go('/practice'), icon: const Icon(Icons.arrow_back_rounded)),
-      title: Text('Kod vizualizatori'.uz),
-    ),
-    body: ListView(
+    extendBodyBehindAppBar: true,
+    appBar: KTopBar(title: 'Kod vizualizatori', onBack: () => context.canPop() ? context.pop() : context.go('/practice'), showBack: !context.isExpanded),
+    body: Builder(builder: (context) => ListView(
       padding: pagePadding(context),
       children: [
         ContentWidth(
@@ -80,6 +79,6 @@ class _VisualizerPageState extends State<VisualizerPage> {
           ]),
         ),
       ],
-    ),
+    )),
   );
 }

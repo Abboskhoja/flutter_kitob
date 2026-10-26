@@ -1245,6 +1245,7 @@ print('Chegirma: $chegirma');'''],
       'Dollar bilan bozorda non sotib ololmaysiz — avval so\'mga almashtirasiz. Matn ko\'rinishidagi son ham shunday: hisob-kitobdan oldin `int.parse` "ayirboshlash punkti"dan o\'tadi. tryParse — qalbaki pulni tekshiradigan kassir: yaroqsiz bo\'lsa, rad etadi (null), lekin janjal qilmaydi.',
       icon: Icons.currency_exchange_rounded,
     ),
+    animation: AnimationBlock('type_convert', 'Matn ↔ son konvertori: `parse`, `toString` va xavfsiz `tryParse`.'),
     why: 'Formalar, API javoblari, fayllar — ma\'lumot ko\'pincha matn ko\'rinishida keladi. To\'g\'ri va xavfsiz aylantirish — ishonchli ilovaning asosi.',
     where: [
       'TextField dan kiritilgan yoshni olish: `int.tryParse(controller.text)`',
@@ -1407,6 +1408,7 @@ void main() {
       'Fitnes bilaguzugi har qadamda `qadam++` qiladi. Yugurganingizda bir urinishda 2 qadam qo\'shiladi: `qadam += 2`. Ternar operator esa: "qadam 10000 dan oshdimi? → Barakalla! : Davom eting".',
       icon: Icons.directions_walk_rounded,
     ),
+    animation: AnimationBlock('operators', 'Kalkulyator: har bir operator ikki sonni qanday natijaga aylantirishini ko\'ring.'),
     why: 'Bu operatorlar har bir siklda, hisoblagichda va UI shartlarida ishlatiladi. Flutterda ternar operator juda ko\'p uchraydi: `Text(kirgan ? \'Chiqish\' : \'Kirish\')`.',
     where: [
       'Sikllar: `for (var i = 0; i < 10; i++)`',

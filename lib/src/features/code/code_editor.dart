@@ -471,7 +471,7 @@ class _SuggestionBar extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(right: 6),
-          child: Icon(Icons.auto_awesome_rounded, size: 16, color: palette.lineNumber),
+          child: Icon(Icons.tips_and_updates_outlined, size: 16, color: palette.lineNumber),
         ),
         for (final w in items)
           Padding(

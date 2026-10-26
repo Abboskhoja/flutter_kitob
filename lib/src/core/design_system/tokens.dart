@@ -51,11 +51,23 @@ abstract final class KBreakpoints {
   static const maxReading = 760.0;
 }
 
+/// Motion tokenlari. Qiymatlar boshlang'ich dizayn parametrlari — foydalanuvchi
+/// sinovlari natijasiga qarab shu yerda sozlanadi.
+///
+/// * fast (120–180 ms) — bosish, hover, kichik holat o'zgarishi.
+/// * standard / medium (200–300 ms) — sahifa ichidagi o'tishlar, panel almashuvi.
+/// * emphasis / slow (300–450 ms) — e'tibor tortadigan kirish, indikator siljishi.
+/// * celebration — bayram ketma-ketligi (konfetti, daraja oshishi).
+/// * lazy — progress halqalari va grafiklarning to'lishi.
 abstract final class KDurations {
   static const fast = Duration(milliseconds: 160);
   static const medium = Duration(milliseconds: 280);
   static const slow = Duration(milliseconds: 450);
   static const lazy = Duration(milliseconds: 800);
+
+  static const standard = medium;
+  static const emphasis = Duration(milliseconds: 400);
+  static const celebration = Duration(milliseconds: 2400);
 }
 
 /// Kod sintaksis ranglari (editor va kod bloklari uchun).

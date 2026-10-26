@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../content/curriculum.dart';
 import '../../content/model.dart';
+import '../../core/design_system/adaptive.dart';
 import '../../core/design_system/components.dart';
 import '../../core/design_system/rich_text.dart';
 import '../../core/design_system/tokens.dart';
@@ -77,8 +78,9 @@ class _ExamPageState extends ConsumerState<ExamPage> {
     final level = curriculum.where((l) => l.number == widget.levelNumber).firstOrNull;
     if (level == null || !level.isReady) {
       return Scaffold(
-        appBar: AppBar(),
-        body: const EmptyState(icon: Icons.hourglass_empty_rounded, title: 'Imtihon hali yo\'q', message: 'Bu daraja darslari tayyorlanmoqda, shuning uchun imtihon ham hali mavjud emas.'),
+        extendBodyBehindAppBar: true,
+        appBar: const KTopBar(),
+        body: Builder(builder: (context) => const EmptyState(icon: Icons.hourglass_empty_rounded, title: 'Imtihon hali yo\'q', message: 'Bu daraja darslari tayyorlanmoqda, shuning uchun imtihon ham hali mavjud emas.')),
       );
     }
     final questions = _questions ??= buildExam(level, _version);
@@ -87,18 +89,17 @@ class _ExamPageState extends ConsumerState<ExamPage> {
     final mm = left.inMinutes.clamp(0, 999).toString().padLeft(2, '0');
     final ss = (left.inSeconds % 60).clamp(0, 59).toString().padLeft(2, '0');
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(onPressed: () => context.canPop() ? context.pop() : context.go('/tests'), icon: const Icon(Icons.close_rounded)),
-        title: Text('${level.number}-daraja imtihoni'.uz),
+extendBodyBehindAppBar: true,
+      appBar: KTopBar(
+        close: true,
+        onBack: () => context.canPop() ? context.pop() : context.go('/tests'),
+        title: '${level.number}-daraja imtihoni',
         actions: [
           if (_started && !_finished)
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: KBadge(left.isNegative ? 'Vaqt tugadi' : '$mm:$ss', icon: Icons.timer_outlined, color: left.inMinutes < 2 ? KColors.error : KColors.primary),
-            ),
+            KBadge(left.isNegative ? 'Vaqt tugadi' : '$mm:$ss', icon: Icons.timer_outlined, color: left.inMinutes < 2 ? KColors.error : KColors.primary),
         ],
       ),
-      body: ListView(padding: pagePadding(context), children: [
+      body: Builder(builder: (context) => ListView(padding: pagePadding(context), children: [
         ContentWidth(
           maxWidth: 860,
           child: !_started
@@ -136,7 +137,7 @@ class _ExamPageState extends ConsumerState<ExamPage> {
                   ),
                 ),
         ),
-      ]),
+      ])),
     );
   }
 }

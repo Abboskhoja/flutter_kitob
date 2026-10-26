@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/design_system/adaptive.dart';
 import '../../core/design_system/components.dart';
 import '../../core/design_system/rich_text.dart';
 import '../../core/design_system/theme.dart';
@@ -19,11 +20,9 @@ class ProjectsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final p = ref.watch(progressProvider);
     return Scaffold(
-      appBar: AppBar(
-        leading: context.isExpanded ? null : IconButton(onPressed: () => context.canPop() ? context.pop() : context.go('/practice'), icon: const Icon(Icons.arrow_back_rounded)),
-        title: Text('Amaliy loyihalar'.uz),
-      ),
-      body: ListView(padding: pagePadding(context), children: [
+extendBodyBehindAppBar: true,
+      appBar: KTopBar(title: 'Amaliy loyihalar', onBack: () => context.canPop() ? context.pop() : context.go('/practice'), showBack: !context.isExpanded),
+      body: Builder(builder: (context) => ListView(padding: pagePadding(context), children: [
         ContentWidth(
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             RichUz('Kichik mashqlardan haqiqiy dasturlarga. Har bir loyiha **brief → talablar → arxitektura → bosqichma-bosqich kod → testlar → code review** yo\'lidan o\'tadi.',
@@ -65,7 +64,7 @@ class ProjectsPage extends ConsumerWidget {
             ),
           ]),
         ),
-      ]),
+      ])),
     );
   }
 }
@@ -78,14 +77,14 @@ class ProjectDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final pr = projectById(projectId);
     if (pr == null) {
-      return Scaffold(appBar: AppBar(), body: const EmptyState(icon: Icons.search_off_rounded, title: 'Loyiha topilmadi', message: 'Bunday loyiha mavjud emas.'));
+      return Scaffold(extendBodyBehindAppBar: true, appBar: const KTopBar(), body: Builder(builder: (context) => const EmptyState(icon: Icons.search_off_rounded, title: 'Loyiha topilmadi', message: 'Bunday loyiha mavjud emas.')));
     }
     final p = ref.watch(progressProvider);
     final doneAll = [for (var i = 0; i < pr.steps.length; i++) p.achievements.contains(stepKey(pr.id, i))].every((x) => x);
     Widget sec(String title, IconData icon, Widget child) => Padding(
       padding: const EdgeInsets.only(bottom: 18),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Row(children: [Icon(icon, color: KColors.primary, size: 20), const SizedBox(width: 8), UzText(title, style: context.text.titleLarge)]),
+        Row(children: [Icon(icon, color: KColors.primary, size: 20), const SizedBox(width: 8), Expanded(child: UzText(title, style: context.text.titleLarge))]),
         const SizedBox(height: 8),
         child,
       ]),
@@ -102,8 +101,9 @@ class ProjectDetailPage extends ConsumerWidget {
         ),
     ]);
     return Scaffold(
-      appBar: AppBar(title: Text(pr.title.uz)),
-      body: ListView(padding: pagePadding(context), children: [
+      extendBodyBehindAppBar: true,
+      appBar: KTopBar(title: pr.title),
+      body: Builder(builder: (context) => ListView(padding: pagePadding(context), children: [
         ContentWidth(
           maxWidth: 900,
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -143,7 +143,7 @@ class ProjectDetailPage extends ConsumerWidget {
             if (pr.flutterNote != null) FeedbackBanner(kind: FeedbackKind.info, title: 'Flutter versiyasi', message: pr.flutterNote),
           ]),
         ),
-      ]),
+      ])),
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../content/curriculum.dart';
 import '../../content/glossary.dart';
 import '../../content/model.dart';
+import '../../core/design_system/adaptive.dart';
 import '../../core/design_system/components.dart';
 import '../../core/design_system/rich_text.dart';
 import '../../core/design_system/theme.dart';
@@ -96,9 +97,9 @@ class _SearchPageState extends State<SearchPage> {
     final total = lessons.length + terms.length + labs.length + cmds.length + errs.length + projects.length + topics.length;
 
     return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 0,
-        title: TextField(
+      extendBodyBehindAppBar: true,
+      appBar: KTopBar(
+        center: TextField(
           controller: _ctrl,
           autofocus: true,
           onChanged: (_) => setState(() {}),
@@ -109,7 +110,7 @@ class _SearchPageState extends State<SearchPage> {
           ),
         ),
       ),
-      body: ListView(padding: pagePadding(context), children: [
+      body: Builder(builder: (context) => ListView(padding: pagePadding(context), children: [
         ContentWidth(
           maxWidth: 900,
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -124,9 +125,9 @@ class _SearchPageState extends State<SearchPage> {
               EmptyState(
                 icon: Icons.manage_search_rounded,
                 title: 'Hech narsa topilmadi',
-                message: '"${_ctrl.text}" bo\'yicha platformada hali dars yoki ma\'lumot yo\'q. Mavjud bo\'lmagan dars uydirilmaydi. AI ustozdan so\'rang yoki rasmiy hujjatlarga qarang: dart.dev, docs.flutter.dev',
-                action: 'AI ustozdan so\'rash',
-                onAction: () => context.go('/home/tutor'),
+                message: '"${_ctrl.text}" bo\'yicha platformada hali dars yoki ma\'lumot yo\'q. Mavjud bo\'lmagan dars uydirilmaydi. Atamalar lug\'atiga yoki rasmiy hujjatlarga qarang: dart.dev, docs.flutter.dev',
+                action: 'Atamalar lug\'ati',
+                onAction: () => context.go('/learn/glossary'),
               ),
             if (lessons.isNotEmpty) ...[
               SectionHeader('Darslar (${lessons.length})', icon: Icons.menu_book_rounded),
@@ -171,7 +172,7 @@ class _SearchPageState extends State<SearchPage> {
             ],
           ]),
         ),
-      ]),
+      ])),
     );
   }
 }

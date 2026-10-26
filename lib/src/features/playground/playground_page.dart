@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kitob_dart/kitob_dart.dart';
 
+import '../../core/design_system/motion.dart';
+import '../../core/design_system/adaptive.dart';
 import '../../core/design_system/components.dart';
 import '../../core/design_system/rich_text.dart';
 import '../../core/design_system/theme.dart';
@@ -257,7 +259,6 @@ class _PlaygroundPageState extends ConsumerState<PlaygroundPage> {
       },
       onReset: _confirmReset,
       onVisualize: () => showVisualizer(context, _ctrl.text, stdin: _stdinCtrl.text.isEmpty ? const [] : _stdinCtrl.text.split('\n')),
-      onExplain: () => context.go('/home/tutor', extra: 'code:${_ctrl.text}'),
       onFind: () => _editorKey.currentState?.openFind(),
       onSample: (code) => _load(ref.read(playgroundProvider.notifier).create(name: 'namuna.dart', code: code)),
       onZoom: (d) => ref.read(settingsProvider.notifier).setCodeFontSize(settings.codeFontSize + d),
@@ -289,40 +290,27 @@ class _PlaygroundPageState extends ConsumerState<PlaygroundPage> {
         Expanded(
           child: IndexedStack(index: _panel.index, children: [editor, outputPanel, problemsPanel, inputPanel]),
         ),
-        Container(
-          color: context.k.surface,
-          padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
-          child: SegmentedButton<_Panel>(
-            showSelectedIcon: false,
-            segments: [
-              ButtonSegment(value: _Panel.code, label: Text('Kod'.uz), icon: const Icon(Icons.code_rounded, size: 18)),
-              ButtonSegment(value: _Panel.output, label: Text('Natija'.uz), icon: const Icon(Icons.terminal_rounded, size: 18)),
-              ButtonSegment(
-                value: _Panel.problems,
-                label: Text(errors > 0 ? '$errors' : 'Xato'.uz),
-                icon: Icon(errors > 0 ? Icons.error_rounded : Icons.check_circle_outline_rounded, size: 18, color: errors > 0 ? KColors.error : null),
-              ),
-              ButtonSegment(value: _Panel.input, label: Text('Kirish'.uz), icon: const Icon(Icons.keyboard_rounded, size: 18)),
-            ],
-            selected: {_panel},
-            onSelectionChanged: (s) => setState(() => _panel = s.first),
-          ),
+        _PanelTabs(
+          panel: _panel,
+          errors: errors,
+          palette: palette,
+          onChanged: (p) => setState(() => _panel = p),
         ),
       ]);
     }
 
     return Scaffold(
       backgroundColor: palette.background,
-      appBar: AppBar(
-        backgroundColor: palette.gutter,
-        foregroundColor: palette.text,
-        leading: context.isExpanded ? null : IconButton(tooltip: 'Orqaga', onPressed: () => context.canPop() ? context.pop() : context.go('/practice'), icon: const Icon(Icons.arrow_back_rounded)),
-        automaticallyImplyLeading: false,
-        titleSpacing: context.isExpanded ? 16 : 0,
-        title: toolbar.title(context, palette),
+      appBar: KTopBar(
+        dark: palette.isDark,
+        background: palette.gutter,
+        onBack: () => context.canPop() ? context.pop() : context.go('/practice'),
+        showBack: !context.isExpanded,
+        center: toolbar.title(context, palette),
         actions: toolbar.actions(context, palette),
       ),
-      body: SafeArea(top: false, child: body),
+      // Telefonda pastki tablar uy indikatori ostigacha cho'ziladi (o'z chetini o'zi qo'shadi).
+      body: SafeArea(top: false, bottom: wide, child: body),
     );
   }
 
@@ -349,7 +337,6 @@ class _Toolbar {
     required this.onDelete,
     required this.onReset,
     required this.onVisualize,
-    required this.onExplain,
     required this.onFind,
     required this.onSample,
     required this.onZoom,
@@ -361,7 +348,7 @@ class _Toolbar {
   final String fileName;
   final List<PlayFile> files;
   final String currentId;
-  final VoidCallback onRun, onStop, onFormat, onCheck, onNew, onRename, onDelete, onReset, onVisualize, onExplain, onFind, onTheme;
+  final VoidCallback onRun, onStop, onFormat, onCheck, onNew, onRename, onDelete, onReset, onVisualize, onFind, onTheme;
   final ValueChanged<String> onSelect;
   final ValueChanged<String> onSample;
   final ValueChanged<double> onZoom;
@@ -431,8 +418,6 @@ class _Toolbar {
               onCheck();
             case 'visual':
               onVisualize();
-            case 'explain':
-              onExplain();
             case 'find':
               onFind();
             case 'rename':
@@ -460,7 +445,6 @@ class _Toolbar {
               it('check', Icons.fact_check_outlined, 'Tekshirish (Check)'),
               it('visual', Icons.slow_motion_video_rounded, 'Qadam-baqadam'),
             ],
-            it('explain', Icons.auto_awesome_rounded, 'Ustozga tushuntirish'),
             it('find', Icons.find_replace_rounded, 'Qidirish / almashtirish'),
             const PopupMenuDivider(),
             it('zoomin', Icons.zoom_in_rounded, 'Shriftni kattalashtirish'),
@@ -477,5 +461,88 @@ class _Toolbar {
       ),
       const SizedBox(width: 4),
     ];
+  }
+}
+
+/// Telefon: editor ostidagi bo'limlar almashtirgichi. Editor rangiga mos,
+/// tanlov indikatori bir bo'limdan ikkinchisiga silliq siljiydi.
+class _PanelTabs extends StatelessWidget {
+  const _PanelTabs({required this.panel, required this.errors, required this.palette, required this.onChanged});
+  final _Panel panel;
+  final int errors;
+  final CodePalette palette;
+  final ValueChanged<_Panel> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      (_Panel.code, 'Kod', Icons.code_rounded),
+      (_Panel.output, 'Natija', Icons.terminal_rounded),
+      (_Panel.problems, errors > 0 ? '$errors xato' : 'Xato', errors > 0 ? Icons.error_rounded : Icons.check_circle_outline_rounded),
+      (_Panel.input, 'Kirish', Icons.keyboard_rounded),
+    ];
+    final bottom = MediaQuery.paddingOf(context).bottom;
+    return Container(
+      color: palette.gutter,
+      padding: EdgeInsets.fromLTRB(10, 6, 10, 6 + bottom),
+      child: Container(
+        height: 46,
+        decoration: BoxDecoration(
+          color: palette.background,
+          borderRadius: BorderRadius.circular(KRadius.pill),
+          border: Border.all(color: palette.lineNumber.withValues(alpha: 0.25)),
+        ),
+        child: LayoutBuilder(builder: (context, c) {
+          final w = c.maxWidth / items.length;
+          return Stack(children: [
+            AnimatedPositioned(
+              duration: KMotion.off(context) ? Duration.zero : KDurations.slow,
+              curve: Curves.easeOutBack,
+              left: panel.index * w + 3,
+              top: 3,
+              bottom: 3,
+              width: w - 6,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [KColors.primary, Color(0xFF1C9BF5)]),
+                  borderRadius: BorderRadius.circular(KRadius.pill),
+                  boxShadow: [BoxShadow(color: KColors.primary.withValues(alpha: 0.4), blurRadius: 10)],
+                ),
+              ),
+            ),
+            Positioned.fill(
+              child: Row(children: [
+                for (final (p, label, icon) in items)
+                  Expanded(
+                    child: Semantics(
+                      button: true,
+                      selected: p == panel,
+                      label: label.uz,
+                      excludeSemantics: true,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(KRadius.pill),
+                        onTap: () {
+                          kHaptic(context);
+                          onChanged(p);
+                        },
+                        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                          Icon(icon, size: 17, color: p == panel ? Colors.white : (p == _Panel.problems && errors > 0 ? KColors.error : palette.lineNumber)),
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(label.uz,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: p == panel ? Colors.white : palette.text.withValues(alpha: 0.75))),
+                          ),
+                        ]),
+                      ),
+                    ),
+                  ),
+              ]),
+            ),
+          ]);
+        }),
+      ),
+    );
   }
 }

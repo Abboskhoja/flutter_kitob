@@ -238,6 +238,7 @@ void main() {
       'StatelessWidget — tashrif qog\'ozi shabloni. Shablon bir marta chiziladi, unga ism va kasb berasiz (constructor parametrlari) — tayyor qog\'oz chiqadi. Bir shablondan istalgancha turli qog\'oz chop etish mumkin.',
       icon: Icons.badge_outlined,
     ),
+    animation: AnimationBlock('stateless_props', 'StatelessWidget otadan kelgan ma\'lumotni chizadi va o\'zi o\'zgarmaydi.'),
     why: 'Qayta ishlatiladigan widgetlar kodni qisqa, tushunarli va xatosiz qiladi. Bitta `MahsulotKarta` widgetini 100 ta mahsulot uchun ishlatasiz — o\'zgartirish kerak bo\'lsa, bir joyni tuzatasiz.',
     where: [
       'Mahsulot kartasi, foydalanuvchi avatari, sarlavha bloki',
@@ -495,6 +496,10 @@ class Salomlash extends StatelessWidget {
       'Javon va tokchalar',
       'Column — ko\'p qavatli javon: narsalar ustma-ust turadi. Row — bitta tokcha: narsalar yonma-yon. Container — quti: uning o\'lchami, rangi va devor qalinligi (padding) bor. SizedBox — narsalar orasiga qo\'yilgan bo\'sh joy.',
       icon: Icons.shelves,
+    ),
+    animation: AnimationBlock(
+      'layout_constraints',
+      'Ota turini almashtiring va bola o\'lchamini o\'zgartiring: bola ichidagi raqamlar — otadan kelgan **haqiqiy** chegaralar. Qoida: chegara pastga, o\'lcham yuqoriga.',
     ),
     why: 'Har qanday dizaynni — kartalar, profillar, menyular — Row, Column va Container kombinatsiyasi bilan qurish mumkin. Bu Flutter layoutning 80 foizi.',
     where: [
@@ -772,6 +777,7 @@ class Svetofor extends StatelessWidget {
       'Tugma — eshik qo\'ng\'irog\'i, `onPressed` — qo\'ng\'iroq simiga ulangan qurilma. Tugmani bosish o\'zi hech narsa qilmaydi — unga ulangan funksiya ishlaydi. Sim ulanmagan bo\'lsa (`null`), qo\'ng\'iroq jim.',
       icon: Icons.doorbell_outlined,
     ),
+    animation: AnimationBlock('scaffold_parts', 'Scaffold bo\'laklari: appBar, body, FAB, bottomNavigationBar.'),
     why: 'Deyarli har bir ekranda AppBar, ikonkalar va tugmalar bor. Ularni to\'g\'ri tanlash — ilova qulayligining asosi (UX).',
     where: [
       'AppBar: sarlavha + qidiruv/sozlamalar ikonkalari',
@@ -981,6 +987,14 @@ class Market extends StatelessWidget {
       'Stadiondagi tablo — ekran, hisob — holat. Gol urilganda hakam hisobni daftarga yozadi (`_son++`), lekin tablo operatoriga aytmasa (`setState`), tablo eski hisobni ko\'rsatib turaveradi. `setState` — "tabloni yangilang!" degan buyruq.',
       icon: Icons.scoreboard_outlined,
     ),
+    // Misollardan keyin: setState aslida nimani qayta qurishini o'zi bosib ko'radi.
+    extra: [
+      HeadingBlock('Tajriba: qaysi widget qayta quriladi?'),
+      AnimationBlock(
+        'state_rebuild',
+        '`setState()` ni bosing: yonib o\'chgan tugunlar qayta qurildi, `build ×N` — necha marta. Holatni pastga tushiring va `const` ni yoqib, farqni ko\'ring.',
+      ),
+    ],
     why: 'Har qanday interaktiv ilova holatga asoslangan: like tugmasi, savat, forma, sozlamalar. setState — Flutterda holat boshqaruvining birinchi va asosiy usuli; Provider, Riverpod, Bloc kabi kutubxonalar ham shu g\'oyaga quriladi.',
     where: [
       'Like/sevimli tugmasi, hisoblagich',
@@ -1267,6 +1281,7 @@ class _PlusMinusState extends State<PlusMinus> {
       'ListView.builder — kutubxonachi: 10 000 kitobning hammasini stolga to\'kmaydi, siz qaysi tokchaga qarasangiz, faqat o\'shalarni olib beradi. `itemCount` — jami kitoblar soni, `itemBuilder` — "N-kitobni olib ber" degan ko\'rsatma.',
       icon: Icons.local_library_outlined,
     ),
+    animation: AnimationBlock('list_builder', 'ListView.builder faqat ko\'rinadigan elementlarni quradi.'),
     why: 'Deyarli har bir ilovada ro\'yxat bor: chatlar, mahsulotlar, xabarlar, sozlamalar. ListView.builder katta ma\'lumotlarda ham ilovani tez ishlashini ta\'minlaydi.',
     where: [
       'Chatlar va kontaktlar ro\'yxati',
@@ -1505,6 +1520,7 @@ class Vazifalar extends StatelessWidget {
       'Stack — qatlamli tort: pastda biskvit, o\'rtada krem, tepada gilos (Positioned bilan aniq joyda). Expanded — pitsani bo\'lish: `flex: 2` olgan odam ikki bo\'lak, `flex: 1` olgan — bitta bo\'lak oladi.',
       icon: Icons.cake_outlined,
     ),
+    animation: AnimationBlock('flex_split', 'Expanded joyni flex nisbatda bo\'ladi; Stack qatlamlarni ustma-ust qo\'yadi.'),
     why: 'Zamonaviy dizaynlar ko\'pincha qatlamli (Stack) va moslashuvchan (Expanded). Expanded yordamida ekran kengligi qanday bo\'lishidan qat\'i nazar layout to\'g\'ri taqsimlanadi.',
     where: [
       'Banner: rasm + ustidagi matn (Stack)',
@@ -1754,6 +1770,7 @@ class Profil extends StatelessWidget {
       'TextField — pochta qutisi, TextEditingController — qutining kaliti: kalit bilan istalgan payt ichidagi xatni (`controller.text`) o\'qiysiz yoki qutini bo\'shatasiz (`clear()`). `onChanged` esa har safar xat tushganda chalinadigan qo\'ng\'iroq.',
       icon: Icons.markunread_mailbox_outlined,
     ),
+    animation: AnimationBlock('input_flow', 'Yozish → onChanged → setState → yangi ekran.'),
     why: 'Ro\'yxatdan o\'tish, qidiruv, chat, sozlamalar — foydalanuvchi bilan muloqot kiritish widgetlarisiz bo\'lmaydi.',
     where: [
       'Login va ro\'yxatdan o\'tish formalari',

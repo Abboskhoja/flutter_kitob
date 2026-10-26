@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kitob_dart/kitob_dart.dart';
@@ -310,18 +311,7 @@ class CodeFrame extends ConsumerWidget {
                       style: TextStyle(color: p.lineNumber, fontSize: 12.5, fontWeight: FontWeight.w600)),
                 ),
                 ...actions,
-                if (code != null)
-                  IconButton(
-                    tooltip: 'Nusxa olish',
-                    visualDensity: VisualDensity.compact,
-                    iconSize: 18,
-                    color: p.lineNumber,
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: code!));
-                      showToast(context, 'Kod nusxalandi', icon: Icons.check_rounded);
-                    },
-                    icon: const Icon(Icons.copy_rounded),
-                  ),
+                if (code != null) _CopyButton(code: code!, color: p.lineNumber),
               ]),
             ),
             child,
@@ -331,4 +321,53 @@ class CodeFrame extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Nusxa olish: bosilganda ikonka ✓ ga aylanadi va bir oz turib qaytadi —
+/// ekranni toast bilan to'sib qo'ymasdan natijani ko'rsatadi.
+class _CopyButton extends StatefulWidget {
+  const _CopyButton({required this.code, required this.color});
+  final String code;
+  final Color color;
+
+  @override
+  State<_CopyButton> createState() => _CopyButtonState();
+}
+
+class _CopyButtonState extends State<_CopyButton> with SingleTickerProviderStateMixin {
+  // Timer o'rniga controller: vidjet yopilsa o'zi to'xtaydi.
+  late final _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 1600));
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  void _copy() {
+    Clipboard.setData(ClipboardData(text: widget.code));
+    HapticFeedback.lightImpact();
+    SemanticsService.sendAnnouncement(View.of(context), 'Kod nusxalandi'.uz, Directionality.of(context));
+    _c.forward(from: 0);
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _c,
+    builder: (context, _) {
+      final done = _c.isAnimating;
+      return IconButton(
+        tooltip: (done ? 'Nusxalandi' : 'Nusxa olish').uz,
+        visualDensity: VisualDensity.compact,
+        iconSize: 18,
+        color: done ? KColors.success : widget.color,
+        onPressed: _copy,
+        icon: AnimatedSwitcher(
+          duration: KDurations.fast,
+          transitionBuilder: (c, a) => ScaleTransition(scale: a, child: c),
+          child: Icon(done ? Icons.check_rounded : Icons.copy_rounded, key: ValueKey(done)),
+        ),
+      );
+    },
+  );
 }

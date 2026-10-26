@@ -134,8 +134,7 @@ class AnalogyCard extends StatelessWidget {
       const SizedBox(width: 14),
       Expanded(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('HAYOTIY MISOL'.uz, style: context.text.labelSmall!.copyWith(color: KColors.orange)),
-          const SizedBox(height: 2),
+          // "Hayotiy misol" bo'lim sarlavhasida yozilgan — bu yerda takrorlanmaydi.
           UzText(b.title, style: context.text.titleMedium),
           const SizedBox(height: 6),
           RichUz(b.text, style: context.text.bodyMedium!.copyWith(color: context.k.text)),
@@ -189,11 +188,15 @@ class SyntaxView extends StatelessWidget {
     for (final p in b.parts)
       Padding(
         padding: const EdgeInsets.only(bottom: 6),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          ConstrainedBox(constraints: const BoxConstraints(minWidth: 90), child: KodChip(p.part)),
+        child: LayoutBuilder(builder: (context, c) => Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // Uzun bo'lak (masalan, `StatelessWidget`) yarim kenglikdan oshmasin — kichrayadi.
+          ConstrainedBox(
+            constraints: BoxConstraints(minWidth: 90, maxWidth: c.maxWidth * 0.5),
+            child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: KodChip(p.part)),
+          ),
           const SizedBox(width: 10),
           Expanded(child: Padding(padding: const EdgeInsets.only(top: 2), child: RichUz(p.meaning, style: context.text.bodyMedium))),
-        ]),
+        ])),
       ),
   ]);
 }

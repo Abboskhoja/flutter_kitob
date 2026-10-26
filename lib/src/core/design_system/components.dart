@@ -3,7 +3,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../shared/bitik.dart';
+import 'adaptive.dart';
+import 'motion.dart';
 import 'rich_text.dart';
+import 'theme.dart';
 import 'tokens.dart';
 
 /// Bosilganda biroz kichrayadigan (mikrointeraksiya) o'ram.
@@ -116,7 +120,8 @@ class _KCardState extends State<KCard> {
       child: AnimatedSlide(
         offset: Offset(0, _hover && interactive ? -0.01 : 0),
         duration: KDurations.fast,
-        child: card,
+        // Web: bosiladigan kartalarda kursor ortidan yumshoq yorug'lik.
+        child: Spotlight(enabled: interactive && context.look == KLook.web, radius: widget.radius, child: card),
       ),
     );
   }
@@ -370,9 +375,13 @@ class KBadge extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (icon != null) ...[Icon(icon, size: 13, color: solid ? Colors.white : color), const SizedBox(width: 4)],
-        Text(
-          label.uz,
-          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: solid ? Colors.white : color, letterSpacing: 0.2),
+        Flexible(
+          child: Text(
+            label.uz,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: solid ? Colors.white : color, letterSpacing: 0.2),
+          ),
         ),
       ],
     ),
@@ -391,9 +400,10 @@ class SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: KSpace.md),
     child: Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (icon != null) ...[Icon(icon, size: 20, color: KColors.primary), const SizedBox(width: 8)],
+        // Ikonka sarlavha qatori bilan bir chiziqda (izoh uzun bo'lsa ham).
+        if (icon != null) ...[Padding(padding: const EdgeInsets.only(top: 2), child: Icon(icon, size: 20, color: KColors.primary)), const SizedBox(width: 8)],
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -424,7 +434,8 @@ class EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          KIconBox(icon, size: 64, color: KColors.primary),
+          // Bo'sh holatda ham yolg'iz emassiz — Bitik o'ylab turibdi.
+          const Bitik(mood: BitikMood.think, size: 104),
           const SizedBox(height: KSpace.lg),
           UzText(title, style: context.text.titleLarge, textAlign: TextAlign.center),
           const SizedBox(height: KSpace.sm),
@@ -509,10 +520,15 @@ class ContentWidth extends StatelessWidget {
 }
 
 /// Sahifalar uchun standart chetlik (telefonda 16, katta ekranda ko'proq).
+///
+/// Yuqori/pastki tizim chetlari (status bar, shaffof navigatsiya, suzuvchi
+/// [KTopBar]) ham qo'shiladi: kontent ular ortidan o'tadi, lekin oxirgi
+/// element hech qachon ostida qolib ketmaydi.
 EdgeInsets pagePadding(BuildContext context) {
   final w = context.screenWidth;
   final h = w < KBreakpoints.medium ? 16.0 : (w < KBreakpoints.expanded ? 24.0 : 32.0);
-  return EdgeInsets.fromLTRB(h, 12, h, 32);
+  final inset = MediaQuery.paddingOf(context);
+  return EdgeInsets.fromLTRB(h, 12 + inset.top, h, 32 + inset.bottom);
 }
 
 class KDivider extends StatelessWidget {
@@ -541,8 +557,8 @@ class StatTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(value, style: context.text.titleLarge!.copyWith(fontWeight: FontWeight.w800)),
-              UzText(label, style: context.text.bodySmall, maxLines: 1),
+              Text(value, style: numberStyle(context.text.titleLarge!.copyWith(fontWeight: FontWeight.w800)), maxLines: 1, overflow: TextOverflow.ellipsis),
+              UzText(label, style: context.text.bodySmall, maxLines: 2),
             ],
           ),
         ),

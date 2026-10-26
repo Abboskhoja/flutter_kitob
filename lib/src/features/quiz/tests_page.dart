@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/shell.dart';
 import '../../content/curriculum.dart';
 import '../../core/design_system/components.dart';
 import '../../core/design_system/rich_text.dart';
@@ -18,8 +17,11 @@ class TestsPage extends ConsumerWidget {
     final due = p.dueReviews(DateTime.now());
     final scheduled = p.reviews.entries.where((e) => !due.contains(e.key)).toList()..sort((a, b) => a.value.due.compareTo(b.value.due));
     return Scaffold(
-      floatingActionButton: const TutorFab(),
+      // Yuqori va pastki chet pagePadding ichida: kontent status bar va shaffof
+      // navigatsiya ortidan o'tadi (edge-to-edge).
       body: SafeArea(
+        top: false,
+        bottom: false,
         child: ListView(padding: pagePadding(context), children: [
           ContentWidth(
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [

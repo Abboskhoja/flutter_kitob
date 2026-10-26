@@ -4,9 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart' hide Block;
 
+import '../../shared/bitik.dart';
 import '../../content/curriculum.dart';
+import '../../content/interview.dart';
 import '../../content/model.dart';
+import '../../core/design_system/adaptive.dart';
 import '../../core/design_system/components.dart';
+import '../../core/design_system/motion.dart';
 import '../../core/design_system/rich_text.dart';
 import '../../core/design_system/theme.dart';
 import '../../core/design_system/tokens.dart';
@@ -90,14 +94,15 @@ class _LessonPageState extends ConsumerState<LessonPage> {
     final lesson = _lesson;
     if (lesson == null) {
       return Scaffold(
-        appBar: AppBar(),
-        body: EmptyState(
+        extendBodyBehindAppBar: true,
+        appBar: const KTopBar(),
+        body: Builder(builder: (context) => EmptyState(
           icon: Icons.search_off_rounded,
           title: 'Dars topilmadi',
           message: 'Bunday dars mavjud emas yoki hali tayyorlanmoqda.',
           action: 'Darslarga qaytish',
           onAction: () => context.go('/learn'),
-        ),
+        )),
       );
     }
     final steps = _stepsFor(lesson);
@@ -106,53 +111,44 @@ class _LessonPageState extends ConsumerState<LessonPage> {
     final progress = ref.watch(progressProvider).of(lesson.id);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Yopish',
-          icon: const Icon(Icons.close_rounded),
-          onPressed: () => context.canPop() ? context.pop() : context.go('/learn/level/${level.number}'),
-        ),
-        titleSpacing: 0,
-        title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(lesson.title.uz, style: context.text.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
-          Text('${level.number}-daraja · ${step.title}'.uz, style: context.text.bodySmall),
-        ]),
+      // Panel yo'q — suzuvchi ✕, sarlavha va bosqichlar. Kontent ular ostiga
+      // kirmaydi: kod maydonlari fokuslanganda yoki aylantirilganda yashirinmasin.
+      appBar: KTopBar(
+        close: true,
+        onBack: () => context.canPop() ? context.pop() : context.go('/learn/level/${level.number}'),
+        title: lesson.title,
+        subtitle: '${level.number}-daraja · ${step.title}',
         actions: [
-          IconButton(
-            tooltip: 'AI ustozdan so\'rash',
-            onPressed: () => context.go('/home/tutor', extra: lesson.id),
-            icon: const Icon(Icons.auto_awesome_rounded),
-          ),
-          if (progress.completed) const Padding(padding: EdgeInsets.only(right: 8), child: KBadge('Tugallangan', color: KColors.success, icon: Icons.check_rounded)),
+          if (progress.completed) const KBadge('Tugallangan', color: KColors.success, icon: Icons.check_rounded),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(46),
-          child: _StepBar(steps: steps, current: _step, onTap: (i) => _goto(i, steps)),
-        ),
+        bottom: _StepBar(steps: steps, current: _step, onTap: (i) => _goto(i, steps)),
+        bottomHeight: 46,
       ),
-      body: SafeArea(
-        top: false,
-        child: Column(children: [
-          Expanded(
-            child: ListView(
-              controller: _scroll,
-              padding: pagePadding(context),
-              children: [
-                ContentWidth(
-                  maxWidth: KBreakpoints.maxReading + 80,
-                  child: AnimatedSwitcher(
-                    duration: KDurations.medium,
-                    transitionBuilder: (c, a) => FadeTransition(
-                      opacity: a,
-                      child: SlideTransition(position: Tween(begin: const Offset(0.03, 0), end: Offset.zero).animate(a), child: c),
-                    ),
-                    child: KeyedSubtree(key: ValueKey(_step), child: _buildStep(context, lesson, step, steps)),
+      // Pastki panel kontent ustiga chiqmaydi: avtomatik aylantirilgan tugmalar
+      // (masalan, "Tekshirish") hech qachon uning ostida qolib ketmasin.
+      body: Column(children: [
+        Expanded(
+          child: ListView(
+            controller: _scroll,
+            padding: pagePadding(context).copyWith(bottom: 24),
+            children: [
+              ContentWidth(
+                maxWidth: KBreakpoints.maxReading + 80,
+                child: AnimatedSwitcher(
+                  duration: KDurations.medium,
+                  transitionBuilder: (c, a) => FadeTransition(
+                    opacity: a,
+                    child: SlideTransition(position: Tween(begin: const Offset(0.03, 0), end: Offset.zero).animate(a), child: c),
                   ),
+                  child: KeyedSubtree(key: ValueKey(_step), child: _buildStep(context, lesson, step, steps)),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          _BottomNav(
+        ),
+        SizedBox(
+          width: double.infinity,
+          child: _BottomNav(
             canBack: _step > 0,
             nextLabel: switch (step.kind) {
               _StepKind.summary => (nextLessonAfter(lesson.id) == null ? 'Darslar ro\'yxati' : 'Keyingi dars'),
@@ -173,17 +169,23 @@ class _LessonPageState extends ConsumerState<LessonPage> {
               _goto(_step + 1, steps);
             },
           ),
-        ]),
-      ),
+        ),
+      ]),
     );
   }
 
-  Widget _section(String title, IconData icon, List<Widget> children, {Color color = KColors.primary}) => Padding(
+  Widget _section(String title, IconData icon, List<Widget> children) => Padding(
     padding: const EdgeInsets.only(bottom: KSpace.xxl),
     child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      // Kitobdagidek bir xil uslub: rangli "konfetti" emas, bitta urg'u rangi.
       Row(children: [
-        Icon(icon, color: color, size: 22),
-        const SizedBox(width: 8),
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(color: context.k.primarySoft, borderRadius: BorderRadius.circular(9)),
+          child: Icon(icon, color: context.isDark ? const Color(0xFF8CC8FF) : KColors.primary, size: 18),
+        ),
+        const SizedBox(width: 10),
         Expanded(child: Semantics(header: true, child: UzText(title, style: context.text.titleLarge))),
       ]),
       const SizedBox(height: 12),
@@ -243,17 +245,17 @@ class _LessonPageState extends ConsumerState<LessonPage> {
                     },
                   ),
               ]),
-            ], color: KColors.violet),
+            ]),
           if (l.terms.isNotEmpty)
             _section('Yangi atamalar', Icons.translate_rounded, [
               Wrap(spacing: 8, runSpacing: 8, children: [for (final t in l.terms) Chip(label: Text('${t.term} — ${t.uz}'.uz))]),
-            ], color: KColors.violet),
+            ]),
         ]);
       case _StepKind.concept:
         return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           _section('Oddiy tushuntirish', Icons.lightbulb_rounded, _spaced(l.intro, l.id)),
-          _section('Hayotiy misol', Icons.emoji_objects_rounded, [AnalogyCard(l.analogy)], color: KColors.orange),
-          _section('Nima uchun kerak?', Icons.help_outline_rounded, [RichUz(l.why, style: context.text.bodyLarge)], color: KColors.violet),
+          _section('Hayotiy misol', Icons.emoji_objects_rounded, [AnalogyCard(l.analogy)]),
+          _section('Nima uchun kerak?', Icons.help_outline_rounded, [RichUz(l.why, style: context.text.bodyLarge)]),
           _section('Qayerda ishlatiladi?', Icons.place_rounded, [
             for (final w in l.where)
               Padding(
@@ -263,18 +265,18 @@ class _LessonPageState extends ConsumerState<LessonPage> {
                   Expanded(child: RichUz(w, style: context.text.bodyLarge)),
                 ]),
               ),
-          ], color: KColors.cyan),
+          ]),
           if (l.terms.isNotEmpty)
             _section('Atamalar lug\'ati', Icons.translate_rounded, [
               for (final t in l.terms) Padding(padding: const EdgeInsets.only(bottom: 8), child: TermCard(t)),
-            ], color: KColors.violet),
+            ]),
           if (l.extra.isNotEmpty && l.example == null) ..._spaced(l.extra, l.id),
           if (l.example == null && l.animation != null) ...[],
         ]);
       case _StepKind.example:
         return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          if (l.animation != null) _section('Interaktiv animatsiya', Icons.animation_rounded, [BlockView(l.animation!)]),
-          if (l.syntax != null) _section('Sintaksis', Icons.data_object_rounded, [SyntaxView(l.syntax!)], color: KColors.violet),
+          if (l.animation != null) _section('Animatsion tushuntirish', Icons.animation_rounded, [BlockView(l.animation!)]),
+          if (l.syntax != null) _section('Sintaksis', Icons.data_object_rounded, [SyntaxView(l.syntax!)]),
           if (l.example != null)
             _section('Ishlaydigan kod', Icons.code_rounded, [
               RunnableCode(block: l.example!, lessonId: l.id),
@@ -286,9 +288,9 @@ class _LessonPageState extends ConsumerState<LessonPage> {
                   child: Text(l.example!.expectedOutput!.trimRight(), style: codeStyle(size: 13.5, color: context.k.text)),
                 ),
               ],
-            ], color: KColors.success),
+            ]),
           for (final e in l.examples)
-            _section(e.title ?? 'Yana bir misol', Icons.code_rounded, [RunnableCode(block: e, lessonId: l.id)], color: KColors.success),
+            _section(e.title ?? 'Yana bir misol', Icons.code_rounded, [RunnableCode(block: e, lessonId: l.id)]),
           if (l.example != null && l.extra.isNotEmpty) ..._spaced(l.extra, l.id),
         ]);
       case _StepKind.bug:
@@ -297,7 +299,7 @@ class _LessonPageState extends ConsumerState<LessonPage> {
               style: context.text.bodyMedium),
           const SizedBox(height: 12),
           BugFixer(block: l.buggy!, lessonId: l.id),
-        ], color: KColors.error);
+        ]);
       case _StepKind.task:
         if (l.task == null) {
           return _section('Terminal vazifasi', Icons.terminal_rounded, [TerminalTaskWorkspace(task: l.terminalTask!, lessonId: l.id)]);
@@ -334,11 +336,10 @@ class _LessonPageState extends ConsumerState<LessonPage> {
                       KButton(label: 'Qayta tushuntirish', icon: Icons.lightbulb_rounded, compact: true, variant: KButtonVariant.secondary, onPressed: () => _goto(1, steps)),
                       if (l.example != null)
                         KButton(label: 'Misollarni ko\'rish', icon: Icons.code_rounded, compact: true, variant: KButtonVariant.secondary, onPressed: () => _goto(2, steps)),
-                      KButton(label: 'AI ustoz', icon: Icons.auto_awesome_rounded, compact: true, variant: KButtonVariant.ghost, onPressed: () => context.go('/home/tutor', extra: l.id)),
                     ]),
                   ),
           ),
-        ], color: KColors.violet);
+        ]);
       case _StepKind.summary:
         final p = ref.watch(progressProvider).of(l.id);
         final next = nextLessonAfter(l.id);
@@ -352,7 +353,7 @@ class _LessonPageState extends ConsumerState<LessonPage> {
               child: KCard(
                 gradient: const LinearGradient(colors: [KColors.success, Color(0xFF22C55E)]),
                 child: Row(children: [
-                  const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 44),
+                  const Bitik(mood: BitikMood.cheer, size: 64),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -382,12 +383,31 @@ class _LessonPageState extends ConsumerState<LessonPage> {
                   Expanded(child: RichUz(s, style: context.text.bodyLarge)),
                 ]),
               ),
-          ], color: KColors.success),
+          ]),
+          // Dasturchi nigohi: shu mavzu ish suhbatlarida qanday so'raladi.
+          if (interviewQuestions.any((q) => q.lessonId == l.id))
+            _section('Bu mavzu intervyuda so\'raladi', Icons.work_outline_rounded, [
+              for (final q in interviewQuestions.where((q) => q.lessonId == l.id))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: KCard(
+                    onTap: () => context.go('/practice/interview'),
+                    padding: const EdgeInsets.all(12),
+                    child: Row(children: [
+                      KBadge('${q.track.title} · ${q.level.title}', color: KColors.pink),
+                      const SizedBox(width: 10),
+                      Expanded(child: UzText(q.question, style: context.text.titleSmall)),
+                      const Icon(Icons.chevron_right_rounded),
+                    ]),
+                  ),
+                ),
+              Text('Javobni avval o\'zingiz tuzing, keyin intervyu bo\'limida solishtiring.'.uz, style: context.text.bodySmall),
+            ]),
           _section('Takrorlash tavsiyasi', Icons.psychology_rounded, [
             RichUz(l.revisionTip, style: context.text.bodyLarge),
             const SizedBox(height: 6),
             Text('Bu mavzu ertaga takrorlash ro\'yxatiga qo\'shiladi (intervalli takrorlash).'.uz, style: context.text.bodySmall),
-          ], color: KColors.violet),
+          ]),
           if (l.next != null)
             _section('Keyingi qadam', Icons.arrow_forward_rounded, [
               RichUz(l.next!, style: context.text.bodyLarge),
@@ -404,7 +424,7 @@ class _LessonPageState extends ConsumerState<LessonPage> {
                 ),
               ],
             ]),
-          if (l.links.isNotEmpty) _section('Rasmiy manbalar', Icons.public_rounded, [DocLinksView(l.links)], color: KColors.cyan),
+          if (l.links.isNotEmpty) _section('Rasmiy manbalar', Icons.public_rounded, [DocLinksView(l.links)]),
           Text('Kontent tekshirilgan: $contentSdk · $contentReviewed'.uz, style: context.text.bodySmall),
         ]);
     }
@@ -418,42 +438,65 @@ class _StepBar extends StatelessWidget {
   final ValueChanged<int> onTap;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    height: 46,
-    child: ListView.separated(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      itemCount: steps.length,
-      separatorBuilder: (_, _) => const SizedBox(width: 6),
-      itemBuilder: (context, i) {
-        final s = steps[i];
-        final active = i == current;
-        final done = i < current;
-        return Semantics(
-          button: true,
-          selected: active,
-          label: '${i + 1}-bosqich: ${s.title}'.uz,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(KRadius.pill),
-            onTap: () => onTap(i),
-            child: AnimatedContainer(
-              duration: KDurations.medium,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: active ? KColors.primary : (done ? context.k.successSoft : context.k.surfaceAlt),
-                borderRadius: BorderRadius.circular(KRadius.pill),
-              ),
-              child: Row(children: [
-                Icon(done ? Icons.check_rounded : s.icon, size: 16, color: active ? Colors.white : (done ? KColors.success : context.k.textMuted)),
-                const SizedBox(width: 6),
-                Text(s.title.uz,
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: active ? Colors.white : (done ? context.k.successText : context.k.textSecondary))),
-              ]),
+  Widget build(BuildContext context) => Column(children: [
+    SizedBox(height: 42, child: _chips(context)),
+    // Butun dars bo'yicha umumiy progress — har bosqichda silliq to'ladi.
+    TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: (current + 1) / steps.length),
+      duration: KDurations.slow,
+      curve: KMotion.emphasized,
+      builder: (context, v, _) => Container(
+        height: 4,
+        alignment: Alignment.centerLeft,
+        color: context.k.surfaceHigh,
+        child: FractionallySizedBox(
+          widthFactor: v,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [KColors.primary, KColors.cyan]),
+              boxShadow: [BoxShadow(color: KColors.cyan.withValues(alpha: 0.6), blurRadius: 8)],
             ),
           ),
-        );
-      },
+        ),
+      ),
     ),
+  ]);
+
+  Widget _chips(BuildContext context) => ListView.separated(
+    scrollDirection: Axis.horizontal,
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    itemCount: steps.length,
+    separatorBuilder: (_, _) => const SizedBox(width: 6),
+    itemBuilder: (context, i) {
+      final s = steps[i];
+      final active = i == current;
+      final done = i < current;
+      return Semantics(
+        button: true,
+        selected: active,
+        label: '${i + 1}-bosqich: ${s.title}'.uz,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(KRadius.pill),
+          onTap: () => onTap(i),
+          child: AnimatedContainer(
+            duration: KDurations.medium,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: active ? null : (done ? context.k.successSoft : context.k.surfaceAlt),
+              gradient: active ? const LinearGradient(colors: [KColors.primary, Color(0xFF1C9BF5)]) : null,
+              borderRadius: BorderRadius.circular(KRadius.pill),
+              boxShadow: [if (active) BoxShadow(color: KColors.primary.withValues(alpha: 0.35), blurRadius: 10, offset: const Offset(0, 3))],
+            ),
+            child: Row(children: [
+              Icon(done ? Icons.check_rounded : s.icon, size: 16, color: active ? Colors.white : (done ? KColors.success : context.k.textMuted)),
+              const SizedBox(width: 6),
+              Text(s.title.uz,
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: active ? Colors.white : (done ? context.k.successText : context.k.textSecondary))),
+            ]),
+          ),
+        ),
+      );
+    },
   );
 }
 
@@ -465,16 +508,22 @@ class _BottomNav extends StatelessWidget {
   final VoidCallback onNext;
 
   @override
-  Widget build(BuildContext context) => Container(
-    decoration: BoxDecoration(color: context.k.surface, border: Border(top: BorderSide(color: context.k.border))),
-    padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+  Widget build(BuildContext context) => Glass(
+    radius: BorderRadius.zero,
+    padding: EdgeInsets.fromLTRB(16, 10, 16, 10 + MediaQuery.paddingOf(context).bottom),
     child: ContentWidth(
       maxWidth: KBreakpoints.maxReading + 80,
-      child: Row(children: [
-        if (canBack) KButton(label: 'Orqaga', icon: Icons.arrow_back_rounded, variant: KButtonVariant.ghost, onPressed: onBack),
-        const Spacer(),
-        KButton(label: nextLabel, trailingIcon: Icons.arrow_forward_rounded, onPressed: onNext),
-      ]),
+      // Tor ekran yoki katta shriftda ham sig'adi: tugmalar qisqaradi, "Orqaga" faqat ikonkaga aylanadi.
+      child: LayoutBuilder(builder: (context, c) {
+        final narrow = c.maxWidth < 360;
+        return Row(children: [
+          if (canBack)
+            KButton(label: narrow ? '' : 'Orqaga', icon: Icons.arrow_back_rounded, variant: KButtonVariant.ghost, onPressed: onBack, tooltip: narrow ? 'Orqaga' : null),
+          const SizedBox(width: 10),
+          const Spacer(),
+          Flexible(flex: 6, child: KButton(label: nextLabel, trailingIcon: Icons.arrow_forward_rounded, onPressed: onNext)),
+        ]);
+      }),
     ),
   );
 }

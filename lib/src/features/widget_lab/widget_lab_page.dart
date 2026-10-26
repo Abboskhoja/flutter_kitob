@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/design_system/adaptive.dart';
 import '../../core/design_system/components.dart';
 import '../../core/design_system/rich_text.dart';
 import '../../core/design_system/theme.dart';
@@ -19,11 +20,9 @@ class WidgetLabPage extends StatelessWidget {
     final lab = labById(labId);
     if (lab != null) return _LabDetail(key: ValueKey(lab.id), lab: lab);
     return Scaffold(
-      appBar: AppBar(
-        leading: context.isExpanded ? null : IconButton(onPressed: () => context.canPop() ? context.pop() : context.go('/practice'), icon: const Icon(Icons.arrow_back_rounded)),
-        title: Text('Widget laboratoriyasi'.uz),
-      ),
-      body: ListView(padding: pagePadding(context), children: [
+extendBodyBehindAppBar: true,
+      appBar: KTopBar(title: 'Widget laboratoriyasi', onBack: () => context.canPop() ? context.pop() : context.go('/practice'), showBack: !context.isExpanded),
+      body: Builder(builder: (context) => ListView(padding: pagePadding(context), children: [
         ContentWidth(
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             RichUz('Har bir laboratoriyada widget xususiyatlarini o\'zgartirasiz — **haqiqiy Flutter widgeti** darhol yangilanadi va unga mos **kod** yoziladi.',
@@ -61,7 +60,7 @@ class WidgetLabPage extends StatelessWidget {
             ),
           ]),
         ),
-      ]),
+      ])),
     );
   }
 }
@@ -116,12 +115,13 @@ class _LabDetailState extends ConsumerState<_LabDetail> {
       for (final t in lab.tips) ...[const SizedBox(height: 8), FeedbackBanner(kind: FeedbackKind.info, title: 'Maslahat', message: t)],
     ]);
     return Scaffold(
-      appBar: AppBar(title: Text(lab.title.uz)),
-      body: wide
+extendBodyBehindAppBar: true,
+      appBar: KTopBar(title: lab.title),
+      body: Builder(builder: (context) => wide
           ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              SizedBox(width: 340, child: ListView(padding: const EdgeInsets.all(16), children: [info, const SizedBox(height: 16), controls])),
+              SizedBox(width: 340, child: ListView(padding: pagePadding(context).copyWith(left: 16, right: 16), children: [info, const SizedBox(height: 16), controls])),
               VerticalDivider(width: 1, color: context.k.border),
-              Expanded(child: ListView(padding: const EdgeInsets.all(20), children: [preview, const SizedBox(height: 16), code])),
+              Expanded(child: ListView(padding: pagePadding(context).copyWith(left: 20, right: 20), children: [preview, const SizedBox(height: 16), code])),
             ])
           : ListView(padding: pagePadding(context), children: [
               preview,
@@ -131,7 +131,7 @@ class _LabDetailState extends ConsumerState<_LabDetail> {
               controls,
               const SizedBox(height: 16),
               code,
-            ]),
+            ])),
     );
   }
 }

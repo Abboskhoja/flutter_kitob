@@ -1,0 +1,7 @@
+# Nusxa oling: cp key.properties.example key.properties  (key.properties git'ga kirmaydi)
+# Kalit yaratish:
+#   keytool -genkey -v -keystore ~/flutter-kitob-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+storePassword=PAROL
+keyPassword=PAROL
+keyAlias=upload
+storeFile=/Users/SIZ/flutter-kitob-upload.jks
